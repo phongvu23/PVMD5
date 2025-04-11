@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>MD5 Kết Quả Ngẫu Nhiên</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 40px; background: #f2f2f2; }
+    h1 { color: #333; }
+    input, button { padding: 10px; font-size: 16px; }
+    #result { margin-top: 20px; font-weight: bold; color: green; }
+    #error { margin-top: 20px; font-weight: bold; color: red; }
+  </style>
+</head>
+<body>
+  <h1>🔐 Nhập chuỗi MD5 để tạo kết quả</h1>
+  <input type="text" id="md5Input" placeholder="VD: c6a4afdb6725166ff1b5845c5546830d" size="40">
+  <button onclick="handleGenerate()">Tạo kết quả</button>
+
+  <div id="result"></div>
+  <div id="error"></div>
+
+  <script>
+    function generateRandomResult(md5Hash) {
+      // Kiểm tra hợp lệ
+      if (typeof md5Hash !== 'string' || md5Hash.length !== 32 || !/^[0-9a-f]{32}$/i.test(md5Hash)) {
+        throw new Error("Mã MD5 không hợp lệ. Vui lòng nhập chuỗi MD5 gồm 32 ký tự hexa.");
+      }
+
+      // Chuyển hexa sang số nguyên
+      let number = BigInt('0x' + md5Hash);
+
+      // Tính toán số ngẫu nhiên
+      let num1 = Number((number % 6n) + 1n);
+      number = (number * 3n + 7n) % 10000000000n;
+      let num2 = Number((number % 6n) + 1n);
+      number = ((number - 5n) * 2n) % 10000000000n;
+      let num3 = Number((number % 6n) + 1n);
+
+      // Ánh xạ số
+      const mapping = {
+        1: '3',
+        2: '2',
+        3: '1',
+        4: '5',
+        5: '6',
+        6: '4'
+      };
+
+      let mappedNum1 = mapping[num1];
+      let mappedNum2 = mapping[num2];
+      let mappedNum3 = mapping[num3];
+
+      // Tạo chuỗi ngẫu nhiên
+      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:',.<>/?";
+      let randomStr = "";
+      for (let i = 0; i < 30; i++) {
+        randomStr += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+
+      return `${mappedNum1}-${mappedNum2}-${mappedNum3}|${randomStr}`;
+    }
+
+    function handleGenerate() {
+      const md5 = document.getElementById('md5Input').value.trim();
+      const resultDiv = document.getElementById('result');
+      const errorDiv = document.getElementById('error');
+      resultDiv.innerText = '';
+      errorDiv.innerText = '';
+
+      try {
+        const result = generateRandomResult(md5.toLowerCase());
+        resultDiv.innerText = "✅ Kết quả: " + result;
+      } catch (e) {
+        errorDiv.innerText = "❌ Lỗi: " + e.message;
+      }
+    }
+  </script>
+</body>
+</html>
