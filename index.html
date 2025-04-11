@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <title>Dự đoán từ MD5</title>
+  <meta charset="UTF-8" />
+  <title>MD5 Dự đoán</title>
   <style>
-    body { font-family: Arial; margin: 20px; }
+    body { font-family: Arial, sans-serif; padding: 20px; }
     .hidden { display: none; }
     #results li.red { color: red; font-weight: bold; }
   </style>
@@ -21,8 +21,8 @@
   </div>
 
   <div id="admin-section" class="hidden">
-    <h3>Admin: Cộng lượt quay cho tất cả</h3>
-    <input type="number" id="add-spins" placeholder="Số lượt quay">
+    <h3>Admin: Cộng lượt quay</h3>
+    <input type="number" id="add-spins" placeholder="Số lượt muốn cộng">
     <button onclick="addSpinsToAll()">Cộng</button>
   </div>
 
@@ -57,44 +57,44 @@
     }
 
     function handleLogin() {
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value;
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value;
       const users = loadUsers();
 
-      if (users[username] === password || (username === ADMIN_USER && password === ADMIN_PASS)) {
+      if ((username === ADMIN_USER && password === ADMIN_PASS) || users[username] === password) {
         currentUser = username;
         localStorage.setItem("loggedInUser", currentUser);
         showApp();
       } else {
-        document.getElementById('login-error').innerText = 'Sai tài khoản hoặc mật khẩu';
+        document.getElementById("login-error").innerText = "Sai tài khoản hoặc mật khẩu.";
       }
     }
 
     function handleRegister() {
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value;
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value;
       const users = loadUsers();
-      const deviceId = localStorage.getItem('registeredOnce');
+      const deviceId = localStorage.getItem("registeredOnce");
 
       if (!username || !password) {
-        document.getElementById('login-error').innerText = 'Không được để trống.';
+        document.getElementById("login-error").innerText = "Không được để trống.";
         return;
       }
 
       if (deviceId) {
-        document.getElementById('login-error').innerText = 'Thiết bị này đã đăng ký tài khoản.';
+        document.getElementById("login-error").innerText = "Thiết bị này đã đăng ký tài khoản.";
         return;
       }
 
       if (users[username]) {
-        document.getElementById('login-error').innerText = 'Tài khoản đã tồn tại.';
+        document.getElementById("login-error").innerText = "Tài khoản đã tồn tại.";
         return;
       }
 
       users[username] = password;
       saveUsers(users);
-      localStorage.setItem('registeredOnce', 'yes');
-      document.getElementById('login-error').innerText = 'Đăng ký thành công. Bạn có thể đăng nhập.';
+      localStorage.setItem("registeredOnce", "yes");
+      document.getElementById("login-error").innerText = "Đăng ký thành công. Vui lòng đăng nhập.";
     }
 
     function showApp() {
@@ -106,18 +106,23 @@
         document.getElementById("admin-section").classList.remove("hidden");
       }
 
+      initUserData();
       updateSpinText();
       loadResults();
     }
 
+    function initUserData() {
+      const data = getUserData();
+      if (!data[currentUser]) {
+        data[currentUser] = { spins: 1, results: [] };
+        saveUserData(data);
+      }
+    }
+
     function updateSpinText() {
       const data = getUserData();
-      const user = data[currentUser] || { spins: 1, results: [] };
-
-      // Reset mỗi ngày 1 lượt nếu chưa có dữ liệu
-      if (user.spins === undefined) user.spins = 1;
-
-      document.getElementById("spin-count").innerText = "Số lượt còn lại: " + user.spins;
+      const spins = data[currentUser]?.spins ?? 0;
+      document.getElementById("spin-count").innerText = "Số lượt còn lại: " + spins;
     }
 
     function addSpinsToAll() {
@@ -129,49 +134,42 @@
         data[user].spins = (data[user].spins || 0) + amount;
       }
       saveUserData(data);
-      alert("Đã cộng " + amount + " lượt quay!");
+      alert("Đã cộng " + amount + " lượt quay cho tất cả!");
       updateSpinText();
     }
 
     function generateResult() {
-      const md5 = document.getElementById("md5-input").value.trim();
-      const data = getUserData();
-      if (!data[currentUser]) data[currentUser] = { spins: 1, results: [] };
-
-      if (currentUser !== ADMIN_USER && data[currentUser].spins <= 0) {
-        alert("Hết lượt quay.");
+      const md5 = document.getElementById("md5-input").value.trim().toLowerCase();
+      if (!/^[a-f0-9]{32}$/.test(md5)) {
+        alert("Mã MD5 không hợp lệ.");
         return;
       }
 
-      try {
-        const result = createResultFromMD5(md5);
-        const results = data[currentUser].results || [];
+      const data = getUserData();
+      const user = data[currentUser];
 
-        results.unshift(result);
-        if (results.length > MAX_RESULTS) results.pop();
-
-        data[currentUser].results = results;
-
-        if (currentUser !== ADMIN_USER) data[currentUser].spins--;
-
-        saveUserData(data);
-        loadResults();
-        updateSpinText();
-        document.getElementById("md5-input").value = "";
-      } catch (e) {
-        alert("Lỗi: " + e.message);
+      if (currentUser !== ADMIN_USER && user.spins <= 0) {
+        alert("Bạn đã hết lượt quay.");
+        return;
       }
+
+      const result = createResultFromMD5(md5);
+      user.results.unshift(result);
+      if (user.results.length > MAX_RESULTS) user.results.pop();
+
+      if (currentUser !== ADMIN_USER) user.spins--;
+
+      saveUserData(data);
+      loadResults();
+      updateSpinText();
+      document.getElementById("md5-input").value = ""; // Xóa input
     }
 
     function createResultFromMD5(md5_hash) {
-      if (!/^[a-f0-9]{32}$/i.test(md5_hash)) {
-        throw new Error("Mã MD5 không hợp lệ.");
-      }
-
-      const mapping = { 1: '3', 2: '2', 3: '1', 4: '5', 5: '6', 6: '4' };
+      const mapping = { 1: "3", 2: "2", 3: "1", 4: "5", 5: "6", 6: "4" };
       let number = parseInt(md5_hash, 16);
-      const nums = [];
 
+      const nums = [];
       for (let i = 0; i < 3; i++) {
         number = (number * 3 + 7 + i * 2) % (10 ** 10);
         nums.push(mapping[(number % 6) + 1]);
@@ -192,10 +190,10 @@
       const ul = document.getElementById("results");
       ul.innerHTML = "";
 
-      results.forEach((res, i) => {
+      results.forEach((res, index) => {
         const li = document.createElement("li");
-        li.innerText = `${i + 1}. ${res}`;
-        if (i === 0) li.classList.add("red");
+        li.innerText = `${index + 1}. ${res}`;
+        if (index === 0) li.classList.add("red");
         ul.appendChild(li);
       });
     }
