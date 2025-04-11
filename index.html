@@ -36,6 +36,7 @@
     <input type="password" id="loginPassword" placeholder="Mật khẩu" size="40">
     <button onclick="handleLogin()">Đăng Nhập</button>
     <div id="loginResult"></div>
+    <button onclick="handleLogout()" id="logoutButton" style="display:none;">Đăng Xuất</button>
 
     <div id="adminSection">
         <h2>Quản Lý Điểm</h2>
@@ -142,7 +143,9 @@
             const password = document.getElementById('loginPassword').value.trim();
             const loginResultDiv = document.getElementById('loginResult');
 
-            const user = users.find(u => (u.username === username && u.password === password) || (adminAccount.username === username && adminAccount.password === password));
+            // Kiểm tra cả người dùng bình thường và admin
+            const user = users.find(u => (u.username === username && u.password === password)) || 
+                         (adminAccount.username === username && adminAccount.password === password && adminAccount);
 
             if (user) {
                 currentUser = user.isAdmin ? adminAccount : user;
@@ -153,9 +156,20 @@
                     document.getElementById('adminSection').style.display = 'none';
                 }
                 updateUserInfo(); // Cập nhật thông tin người dùng khi đăng nhập
+                document.getElementById('logoutButton').style.display = 'inline'; // Hiện nút đăng xuất
             } else {
                 loginResultDiv.innerText = "❌ Tên đăng nhập hoặc mật khẩu không đúng.";
             }
+        }
+
+        function handleLogout() {
+            currentUser = null;
+            updateUserInfo(); // Cập nhật thông tin người dùng
+            document.getElementById('adminSection').style.display = 'none'; // Ẩn phần quản lý điểm
+            document.getElementById('logoutButton').style.display = 'none'; // Ẩn nút đăng xuất
+            document.getElementById('loginResult').innerText = ""; // Xóa thông báo đăng nhập
+            document.getElementById('result').innerText = ""; // Xóa kết quả trước đó
+            document.getElementById('error').innerText = ""; // Xóa lỗi trước đó
         }
 
         function handleAddPoints() {
