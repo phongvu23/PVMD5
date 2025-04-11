@@ -36,7 +36,28 @@
       number = ((number - 5n) * 2n) % 10000000000n;
       let num3 = Number((number % 6n) + 1n);
 
-      return [num1, num2, num3];
+      // Ánh xạ số
+      const mapping = {
+        1: '3',
+        2: '2',
+        3: '1',
+        4: '5',
+        5: '6',
+        6: '4'
+      };
+
+      let mappedNum1 = mapping[num1];
+      let mappedNum2 = mapping[num2];
+      let mappedNum3 = mapping[num3];
+
+      // Tạo chuỗi ngẫu nhiên
+      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:',.<>/?";
+      let randomStr = "";
+      for (let i = 0; i < 30; i++) {
+        randomStr += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+
+      return `${mappedNum1}-${mappedNum2}-${mappedNum3}|${randomStr}`;
     }
 
     function handleGenerate() {
@@ -47,26 +68,8 @@
       errorDiv.innerText = '';
 
       try {
-        const resultCounts = { tai: 0, xiu: 0 };
-        const firstResult = generateRandomResult(md5.toLowerCase());
-
-        // Theo dõi xác suất cho 10000 lần thử nghiệm
-        for (let i = 0; i < 10000; i++) {
-          let [num1, num2, num3] = generateRandomResult(md5.toLowerCase());
-          let sum = num1 + num2 + num3;
-
-          if (sum < 11) {
-            resultCounts.xiu++;
-          } else {
-            resultCounts.tai++;
-          }
-        }
-
-        // Tính xác suất
-        const taiProbability = (resultCounts.tai / 10000 * 100).toFixed(2);
-        const xiuProbability = (resultCounts.xiu / 10000 * 100).toFixed(2);
-
-        resultDiv.innerText = `✅ Kết quả đầu tiên: ${firstResult.join('-')} | Xác suất TÀI: ${taiProbability}% | Xác suất XỈU: ${xiuProbability}%`;
+        const result = generateRandomResult(md5.toLowerCase());
+        resultDiv.innerText = "✅ Kết quả: " + result;
       } catch (e) {
         errorDiv.innerText = "❌ Lỗi: " + e.message;
       }
