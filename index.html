@@ -1,200 +1,197 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <title>MD5 Kết Quả Ngẫu Nhiên</title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 40px; background: #f2f2f2; }
-        h1 { color: #333; }
-        input, button { padding: 10px; font-size: 16px; }
-        #result, #registerResult, #loginResult, #error { margin-top: 20px; font-weight: bold; }
-        #result { color: green; }
-        #error { color: red; }
-        #adminSection { display: none; margin-top: 20px; }
-        #userInfo { margin-top: 20px; }
-    </style>
+  <meta charset="UTF-8">
+  <title>MD5 Dự Đoán</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 30px; background: #f9f9f9; }
+    input, button { padding: 10px; margin: 5px; font-size: 16px; }
+    .hidden { display: none; }
+    #result, #error, #remaining { margin-top: 10px; font-weight: bold; }
+  </style>
 </head>
 <body>
-    <h1>🔐 Nhập chuỗi MD5 để tạo kết quả</h1>
-    
-    <!-- Thông tin người dùng -->
-    <div id="userInfo"></div>
+  <h1>🔐 Hệ thống Dự Đoán MD5</h1>
 
-    <input type="text" id="md5Input" placeholder="VD: c6a4afdb6725166ff1b5845c5546830d" size="40">
+  <!-- Đăng nhập -->
+  <div id="login-form">
+    <input type="text" id="username" placeholder="Tên đăng nhập">
+    <input type="password" id="password" placeholder="Mật khẩu">
+    <button onclick="handleLogin()">Đăng nhập</button>
+    <button onclick="handleRegister()">Đăng ký</button>
+    <div id="login-error" style="color: red;"></div>
+  </div>
+
+  <!-- Sau khi đăng nhập -->
+  <div id="main-app" class="hidden">
+    <p>👋 Xin chào, <b id="current-user"></b> <button onclick="handleLogout()">Đăng xuất</button></p>
+
+    <input type="text" id="md5Input" placeholder="Nhập mã MD5 (32 ký tự)" size="40">
     <button onclick="handleGenerate()">Tạo kết quả</button>
-    <div id="result"></div>
-    <div id="error"></div>
 
-    <h2>Đăng Ký</h2>
-    <input type="text" id="registerUsername" placeholder="Tên đăng nhập" size="40">
-    <input type="password" id="registerPassword" placeholder="Mật khẩu" size="40">
-    <button onclick="handleRegister()">Đăng Ký</button>
-    <div id="registerResult"></div>
+    <div id="remaining"></div>
+    <div id="result" style="color: green;"></div>
+    <div id="error" style="color: red;"></div>
+  </div>
 
-    <h2>Đăng Nhập</h2>
-    <input type="text" id="loginUsername" placeholder="Tên đăng nhập" size="40">
-    <input type="password" id="loginPassword" placeholder="Mật khẩu" size="40">
-    <button onclick="handleLogin()">Đăng Nhập</button>
-    <div id="loginResult"></div>
-    <button onclick="handleLogout()" id="logoutButton" style="display:none;">Đăng Xuất</button>
+  <script>
+    const MAX_GUESSES = 10;
 
-    <div id="adminSection">
-        <h2>Quản Lý Điểm</h2>
-        <input type="text" id="adminUsername" placeholder="Tên đăng nhập người dùng" size="40">
-        <input type="number" id="pointsToAdd" placeholder="Số điểm cần cộng" size="10">
-        <button onclick="handleAddPoints()">Cộng điểm</button>
-        <div id="adminResult"></div>
-    </div>
+    function saveUsers(users) {
+      localStorage.setItem('users', JSON.stringify(users));
+    }
 
-    <script>
-        let users = [];
-        let currentUser = null;
+    function loadUsers() {
+      return JSON.parse(localStorage.getItem('users') || '{}');
+    }
 
-        // Tạo tài khoản admin mặc định
-        const adminAccount = { username: "phongvu", password: "123adm", points: 0, isAdmin: true };
+    function isAdmin(username) {
+      return username === 'admin';
+    }
 
-        function generateRandomResult(md5Hash) {
-            if (typeof md5Hash !== 'string' || md5Hash.length !== 32 || !/^[0-9a-f]{32}$/i.test(md5Hash)) {
-                throw new Error("Mã MD5 không hợp lệ. Vui lòng nhập chuỗi MD5 gồm 32 ký tự hexa.");
-            }
-
-            let number = BigInt('0x' + md5Hash);
-            let num1 = Number((number % 6n) + 1n);
-            number = (number * 3n + 7n) % 10000000000n;
-            let num2 = Number((number % 6n) + 1n);
-            number = ((number - 5n) * 2n) % 10000000000n;
-            let num3 = Number((number % 6n) + 1n);
-
-            const mapping = { 1: '3', 2: '2', 3: '1', 4: '5', 5: '6', 6: '4' };
-
-            let mappedNum1 = mapping[num1];
-            let mappedNum2 = mapping[num2];
-            let mappedNum3 = mapping[num3];
-
-            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:',.<>/?";
-            let randomStr = "";
-            for (let i = 0; i < 30; i++) {
-                randomStr += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-
-            return `${mappedNum1}-${mappedNum2}-${mappedNum3}|${randomStr}`;
+    function setLogin(username) {
+      localStorage.setItem('loggedInUser', username);
+      if (!isAdmin(username)) {
+        const today = new Date().toISOString().split('T')[0];
+        let usage = JSON.parse(localStorage.getItem('usage') || '{}');
+        if (!usage[username] || usage[username].date !== today) {
+          usage[username] = { date: today, count: 0 };
+          localStorage.setItem('usage', JSON.stringify(usage));
         }
+      }
+    }
 
-        function updateUserInfo() {
-            const userInfoDiv = document.getElementById('userInfo');
-            if (currentUser) {
-                userInfoDiv.innerHTML = `👤 Tên người dùng: ${currentUser.username} | Điểm còn lại: ${currentUser.points}`;
-            } else {
-                userInfoDiv.innerHTML = '';
-            }
-        }
+    function getLoggedInUser() {
+      return localStorage.getItem('loggedInUser');
+    }
 
-        function handleGenerate() {
-            const md5 = document.getElementById('md5Input').value.trim();
-            const resultDiv = document.getElementById('result');
-            const errorDiv = document.getElementById('error');
-            resultDiv.innerText = '';
-            errorDiv.innerText = '';
+    function logout() {
+      localStorage.removeItem('loggedInUser');
+    }
 
-            if (!currentUser) {
-                errorDiv.innerText = "❌ Bạn cần đăng nhập để tạo kết quả.";
-                return;
-            }
+    function getRemaining(username) {
+      if (isAdmin(username)) return 'Không giới hạn';
+      const usage = JSON.parse(localStorage.getItem('usage') || '{}');
+      if (usage[username]) {
+        return MAX_GUESSES - usage[username].count;
+      }
+      return MAX_GUESSES;
+    }
 
-            if (currentUser.points < 1000) {
-                errorDiv.innerText = "❌ Bạn không đủ điểm để tạo kết quả.";
-                return;
-            }
+    function incrementUsage(username) {
+      if (isAdmin(username)) return;
+      const usage = JSON.parse(localStorage.getItem('usage') || '{}');
+      if (!usage[username]) return;
+      usage[username].count += 1;
+      localStorage.setItem('usage', JSON.stringify(usage));
+    }
 
-            try {
-                const result = generateRandomResult(md5.toLowerCase());
-                resultDiv.innerText = "✅ Kết quả: " + result;
+    function updateUI() {
+      const user = getLoggedInUser();
+      if (user) {
+        document.getElementById('login-form').classList.add('hidden');
+        document.getElementById('main-app').classList.remove('hidden');
+        document.getElementById('current-user').innerText = user;
+        document.getElementById('remaining').innerText = isAdmin(user)
+          ? 'Bạn là admin: Không giới hạn lượt'
+          : `Số lượt còn lại: ${getRemaining(user)}`;
+      } else {
+        document.getElementById('login-form').classList.remove('hidden');
+        document.getElementById('main-app').classList.add('hidden');
+      }
+    }
 
-                // Trừ điểm
-                currentUser.points -= 1000;
-                updateUserInfo(); // Cập nhật thông tin người dùng sau mỗi lần dự đoán
+    function handleLogin() {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      const users = loadUsers();
+      if (users[username] && users[username] === password) {
+        setLogin(username);
+        updateUI();
+      } else {
+        document.getElementById('login-error').innerText = 'Sai tài khoản hoặc mật khẩu.';
+      }
+    }
 
-            } catch (e) {
-                errorDiv.innerText = "❌ Lỗi: " + e.message;
-            }
-        }
+    function handleRegister() {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      const users = loadUsers();
+      if (!username || !password) {
+        document.getElementById('login-error').innerText = 'Không được để trống.';
+        return;
+      }
+      if (users[username]) {
+        document.getElementById('login-error').innerText = 'Tài khoản đã tồn tại.';
+      } else {
+        users[username] = password;
+        saveUsers(users);
+        document.getElementById('login-error').innerText = 'Đăng ký thành công. Bạn có thể đăng nhập.';
+      }
+    }
 
-        function handleRegister() {
-            const username = document.getElementById('registerUsername').value.trim();
-            const password = document.getElementById('registerPassword').value.trim();
-            const registerResultDiv = document.getElementById('registerResult');
+    function handleLogout() {
+      logout();
+      updateUI();
+    }
 
-            if (!username || !password) {
-                registerResultDiv.innerText = "❌ Vui lòng nhập đầy đủ thông tin.";
-                return;
-            }
+    function generateRandomResult(md5Hash) {
+      if (typeof md5Hash !== 'string' || md5Hash.length !== 32 || !/^[0-9a-f]{32}$/i.test(md5Hash)) {
+        throw new Error("Mã MD5 không hợp lệ. Vui lòng nhập chuỗi MD5 gồm 32 ký tự hexa.");
+      }
 
-            if (users.some(user => user.username === username)) {
-                registerResultDiv.innerText = "❌ Tên đăng nhập đã tồn tại.";
-                return;
-            }
+      let number = BigInt('0x' + md5Hash);
+      let num1 = Number((number % 6n) + 1n);
+      number = (number * 3n + 7n) % 10000000000n;
+      let num2 = Number((number % 6n) + 1n);
+      number = ((number - 5n) * 2n) % 10000000000n;
+      let num3 = Number((number % 6n) + 1n);
 
-            users.push({ username, password, points: 10000, isAdmin: false });
-            registerResultDiv.innerText = "✅ Đăng ký thành công! Bạn có 10000 điểm.";
-        }
+      const mapping = { 1: '3', 2: '2', 3: '1', 4: '5', 5: '6', 6: '4' };
+      const mapped = [mapping[num1], mapping[num2], mapping[num3]];
 
-        function handleLogin() {
-            const username = document.getElementById('loginUsername').value.trim();
-            const password = document.getElementById('loginPassword').value.trim();
-            const loginResultDiv = document.getElementById('loginResult');
+      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:',.<>/?";
+      let randomStr = "";
+      for (let i = 0; i < 30; i++) {
+        randomStr += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
 
-            // Kiểm tra cả người dùng bình thường và admin
-            const user = users.find(u => (u.username === username && u.password === password)) || 
-                         (adminAccount.username === username && adminAccount.password === password && adminAccount);
+      return `${mapped.join('-')}|${randomStr}`;
+    }
 
-            if (user) {
-                currentUser = user.isAdmin ? adminAccount : user;
-                loginResultDiv.innerText = "✅ Đăng nhập thành công! Bạn có " + (user.isAdmin ? "quyền quản trị." : user.points + " điểm.");
-                if (user.isAdmin) {
-                    document.getElementById('adminSection').style.display = 'block';
-                } else {
-                    document.getElementById('adminSection').style.display = 'none';
-                }
-                updateUserInfo(); // Cập nhật thông tin người dùng khi đăng nhập
-                document.getElementById('logoutButton').style.display = 'inline'; // Hiện nút đăng xuất
-            } else {
-                loginResultDiv.innerText = "❌ Tên đăng nhập hoặc mật khẩu không đúng.";
-            }
-        }
+    function handleGenerate() {
+      const md5 = document.getElementById('md5Input').value.trim();
+      const user = getLoggedInUser();
+      const resultDiv = document.getElementById('result');
+      const errorDiv = document.getElementById('error');
+      const remainingDiv = document.getElementById('remaining');
+      resultDiv.innerText = '';
+      errorDiv.innerText = '';
 
-        function handleLogout() {
-            currentUser = null;
-            updateUserInfo(); // Cập nhật thông tin người dùng
-            document.getElementById('adminSection').style.display = 'none'; // Ẩn phần quản lý điểm
-            document.getElementById('logoutButton').style.display = 'none'; // Ẩn nút đăng xuất
-            document.getElementById('loginResult').innerText = ""; // Xóa thông báo đăng nhập
-            document.getElementById('result').innerText = ""; // Xóa kết quả trước đó
-            document.getElementById('error').innerText = ""; // Xóa lỗi trước đó
-        }
+      if (!user) {
+        errorDiv.innerText = 'Bạn chưa đăng nhập.';
+        return;
+      }
 
-        function handleAddPoints() {
-            const username = document.getElementById('adminUsername').value.trim();
-            const pointsToAdd = parseInt(document.getElementById('pointsToAdd').value.trim());
-            const adminResultDiv = document.getElementById('adminResult');
+      if (!isAdmin(user) && getRemaining(user) <= 0) {
+        errorDiv.innerText = 'Bạn đã hết lượt trong ngày.';
+        return;
+      }
 
-            if (!currentUser || !currentUser.isAdmin) {
-                adminResultDiv.innerText = "❌ Bạn chưa đăng nhập với quyền quản trị.";
-                return;
-            }
+      try {
+        const result = generateRandomResult(md5.toLowerCase());
+        resultDiv.innerText = '✅ Kết quả: ' + result;
+        incrementUsage(user);
+        remainingDiv.innerText = isAdmin(user)
+          ? 'Bạn là admin: Không giới hạn lượt'
+          : `Số lượt còn lại: ${getRemaining(user)}`;
+      } catch (e) {
+        errorDiv.innerText = '❌ Lỗi: ' + e.message;
+      }
+    }
 
-            if (!username || isNaN(pointsToAdd) || pointsToAdd <= 0) {
-                adminResultDiv.innerText = "❌ Vui lòng nhập đầy đủ thông tin.";
-                return;
-            }
-
-            const user = users.find(u => u.username === username);
-            if (user) {
-                user.points += pointsToAdd;
-                adminResultDiv.innerText = `✅ Đã cộng ${pointsToAdd} điểm cho người dùng ${username}.`;
-            } else {
-                adminResultDiv.innerText = "❌ Người dùng không tồn tại.";
-            }
-        }
-    </script>
+    // Khởi động
+    updateUI();
+  </script>
 </body>
 </html>
