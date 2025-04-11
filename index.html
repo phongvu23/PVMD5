@@ -10,10 +10,16 @@
         #result, #registerResult, #loginResult, #error { margin-top: 20px; font-weight: bold; }
         #result { color: green; }
         #error { color: red; }
+        #adminSection { display: none; margin-top: 20px; }
+        #userInfo { margin-top: 20px; }
     </style>
 </head>
 <body>
     <h1>🔐 Nhập chuỗi MD5 để tạo kết quả</h1>
+    
+    <!-- Thông tin người dùng -->
+    <div id="userInfo"></div>
+
     <input type="text" id="md5Input" placeholder="VD: c6a4afdb6725166ff1b5845c5546830d" size="40">
     <button onclick="handleGenerate()">Tạo kết quả</button>
     <div id="result"></div>
@@ -31,9 +37,20 @@
     <button onclick="handleLogin()">Đăng Nhập</button>
     <div id="loginResult"></div>
 
+    <div id="adminSection">
+        <h2>Quản Lý Điểm</h2>
+        <input type="text" id="adminUsername" placeholder="Tên đăng nhập người dùng" size="40">
+        <input type="number" id="pointsToAdd" placeholder="Số điểm cần cộng" size="10">
+        <button onclick="handleAddPoints()">Cộng điểm</button>
+        <div id="adminResult"></div>
+    </div>
+
     <script>
         let users = [];
         let currentUser = null;
+
+        // Tạo tài khoản admin mặc định
+        const adminAccount = { username: "phongvu", password: "123adm", points: 0, isAdmin: true };
 
         function generateRandomResult(md5Hash) {
             if (typeof md5Hash !== 'string' || md5Hash.length !== 32 || !/^[0-9a-f]{32}$/i.test(md5Hash)) {
@@ -62,6 +79,15 @@
             return `${mappedNum1}-${mappedNum2}-${mappedNum3}|${randomStr}`;
         }
 
+        function updateUserInfo() {
+            const userInfoDiv = document.getElementById('userInfo');
+            if (currentUser) {
+                userInfoDiv.innerHTML = `👤 Tên người dùng: ${currentUser.username} | Điểm còn lại: ${currentUser.points}`;
+            } else {
+                userInfoDiv.innerHTML = '';
+            }
+        }
+
         function handleGenerate() {
             const md5 = document.getElementById('md5Input').value.trim();
             const resultDiv = document.getElementById('result');
@@ -85,6 +111,7 @@
 
                 // Trừ điểm
                 currentUser.points -= 1000;
+                updateUserInfo(); // Cập nhật thông tin người dùng sau mỗi lần dự đoán
 
             } catch (e) {
                 errorDiv.innerText = "❌ Lỗi: " + e.message;
@@ -106,7 +133,7 @@
                 return;
             }
 
-            users.push({ username, password, points: 10000 });
+            users.push({ username, password, points: 10000, isAdmin: false });
             registerResultDiv.innerText = "✅ Đăng ký thành công! Bạn có 10000 điểm.";
         }
 
@@ -115,13 +142,43 @@
             const password = document.getElementById('loginPassword').value.trim();
             const loginResultDiv = document.getElementById('loginResult');
 
-            const user = users.find(u => u.username === username && u.password === password);
+            const user = users.find(u => (u.username === username && u.password === password) || (adminAccount.username === username && adminAccount.password === password));
 
             if (user) {
-                currentUser = user;
-                loginResultDiv.innerText = "✅ Đăng nhập thành công! Bạn có " + user.points + " điểm.";
+                currentUser = user.isAdmin ? adminAccount : user;
+                loginResultDiv.innerText = "✅ Đăng nhập thành công! Bạn có " + (user.isAdmin ? "quyền quản trị." : user.points + " điểm.");
+                if (user.isAdmin) {
+                    document.getElementById('adminSection').style.display = 'block';
+                } else {
+                    document.getElementById('adminSection').style.display = 'none';
+                }
+                updateUserInfo(); // Cập nhật thông tin người dùng khi đăng nhập
             } else {
                 loginResultDiv.innerText = "❌ Tên đăng nhập hoặc mật khẩu không đúng.";
+            }
+        }
+
+        function handleAddPoints() {
+            const username = document.getElementById('adminUsername').value.trim();
+            const pointsToAdd = parseInt(document.getElementById('pointsToAdd').value.trim());
+            const adminResultDiv = document.getElementById('adminResult');
+
+            if (!currentUser || !currentUser.isAdmin) {
+                adminResultDiv.innerText = "❌ Bạn chưa đăng nhập với quyền quản trị.";
+                return;
+            }
+
+            if (!username || isNaN(pointsToAdd) || pointsToAdd <= 0) {
+                adminResultDiv.innerText = "❌ Vui lòng nhập đầy đủ thông tin.";
+                return;
+            }
+
+            const user = users.find(u => u.username === username);
+            if (user) {
+                user.points += pointsToAdd;
+                adminResultDiv.innerText = `✅ Đã cộng ${pointsToAdd} điểm cho người dùng ${username}.`;
+            } else {
+                adminResultDiv.innerText = "❌ Người dùng không tồn tại.";
             }
         }
     </script>
