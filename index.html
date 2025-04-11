@@ -1,210 +1,269 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <title>MD5 Dự đoán</title>
+  <meta charset="UTF-8">
+  <title>MD5 Dự Đoán</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
+    body { font-family: Arial, sans-serif; padding: 30px; background: #f2f2f2; }
+    input, button { padding: 10px; margin: 5px; font-size: 16px; }
     .hidden { display: none; }
-    #results li.red { color: red; font-weight: bold; }
+    #result, #error, #remaining { margin-top: 10px; font-weight: bold; }
+    .history { margin-top: 20px; }
+    .history-item { margin-bottom: 5px; }
+    .latest { color: red; font-weight: bold; }
   </style>
 </head>
 <body>
-  <h2 id="welcome">Chào mừng!</h2>
+  <h1>🔐 Hệ thống Dự Đoán MD5</h1>
 
-  <div id="login-section">
-    <input type="text" id="username" placeholder="Tài khoản"><br>
-    <input type="password" id="password" placeholder="Mật khẩu"><br>
+  <!-- Đăng nhập -->
+  <div id="login-form">
+    <input type="text" id="username" placeholder="Tên đăng nhập">
+    <input type="password" id="password" placeholder="Mật khẩu">
     <button onclick="handleLogin()">Đăng nhập</button>
     <button onclick="handleRegister()">Đăng ký</button>
-    <p id="login-error" style="color:red;"></p>
+    <div id="login-error" style="color: red;"></div>
   </div>
 
-  <div id="admin-section" class="hidden">
-    <h3>Admin: Cộng lượt quay</h3>
-    <input type="number" id="add-spins" placeholder="Số lượt muốn cộng">
-    <button onclick="addSpinsToAll()">Cộng</button>
-  </div>
+  <!-- Giao diện chính -->
+  <div id="main-app" class="hidden">
+    <p>👋 Xin chào, <b id="current-user"></b> <button onclick="handleLogout()">Đăng xuất</button></p>
 
-  <div id="app-section" class="hidden">
-    <p id="spin-count"></p>
-    <input type="text" id="md5-input" placeholder="Nhập mã MD5"><br>
-    <button onclick="generateResult()">Tạo kết quả</button>
-    <ul id="results"></ul>
+    <!-- Admin Panel -->
+    <div id="admin-panel" class="hidden">
+      <input type="number" id="bonusCount" placeholder="Nhập số lượt muốn cộng" style="width: 200px;">
+      <button onclick="addSpinsToAllUsers()">➕ Cộng lượt quay cho tất cả</button>
+    </div>
+
+    <!-- Dự đoán -->
+    <input type="text" id="md5Input" placeholder="Nhập mã MD5 (32 ký tự)" size="40">
+    <button onclick="handleGenerate()">Tạo kết quả</button>
+
+    <div id="remaining"></div>
+    <div id="result" style="color: green;"></div>
+    <div id="error" style="color: red;"></div>
+
+    <!-- Lịch sử -->
+    <div class="history">
+      <h3>Lịch sử kết quả gần nhất:</h3>
+      <div id="history-list"></div>
+    </div>
   </div>
 
   <script>
-    const ADMIN_USER = "phongvu";
-    const ADMIN_PASS = "123";
-    const MAX_RESULTS = 10;
-
-    let currentUser = null;
-
-    function loadUsers() {
-      return JSON.parse(localStorage.getItem("users") || "{}");
-    }
+    const MAX_GUESSES = 10;
 
     function saveUsers(users) {
-      localStorage.setItem("users", JSON.stringify(users));
+      localStorage.setItem('users', JSON.stringify(users));
     }
 
-    function getUserData() {
-      return JSON.parse(localStorage.getItem("userData") || "{}");
+    function loadUsers() {
+      return JSON.parse(localStorage.getItem('users') || '{}');
     }
 
-    function saveUserData(data) {
-      localStorage.setItem("userData", JSON.stringify(data));
+    function isAdmin(username) {
+      return username === 'phongvu';
+    }
+
+    function setLogin(username) {
+      localStorage.setItem('loggedInUser', username);
+      if (!isAdmin(username)) {
+        const today = new Date().toISOString().split('T')[0];
+        let usage = JSON.parse(localStorage.getItem('usage') || '{}');
+        if (!usage[username] || usage[username].date !== today) {
+          usage[username] = { date: today, count: 0 };
+          localStorage.setItem('usage', JSON.stringify(usage));
+        }
+      }
+    }
+
+    function getLoggedInUser() {
+      return localStorage.getItem('loggedInUser');
+    }
+
+    function logout() {
+      localStorage.removeItem('loggedInUser');
+    }
+
+    function getRemaining(username) {
+      if (isAdmin(username)) return 'Không giới hạn';
+      const usage = JSON.parse(localStorage.getItem('usage') || '{}');
+      if (usage[username]) {
+        const used = usage[username].count;
+        const remaining = MAX_GUESSES - used;
+        return remaining > 0 ? remaining : 1; // luôn có ít nhất 1 lượt miễn phí
+      }
+      return MAX_GUESSES;
     }
 
     function handleLogin() {
-      const username = document.getElementById("username").value.trim();
-      const password = document.getElementById("password").value;
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
       const users = loadUsers();
 
-      if ((username === ADMIN_USER && password === ADMIN_PASS) || users[username] === password) {
-        currentUser = username;
-        localStorage.setItem("loggedInUser", currentUser);
-        showApp();
+      if ((username === 'phongvu' && password === '123') || (users[username] && users[username] === password)) {
+        setLogin(username);
+        updateUI();
       } else {
-        document.getElementById("login-error").innerText = "Sai tài khoản hoặc mật khẩu.";
+        document.getElementById('login-error').innerText = 'Sai tài khoản hoặc mật khẩu.';
       }
     }
 
     function handleRegister() {
-      const username = document.getElementById("username").value.trim();
-      const password = document.getElementById("password").value;
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
       const users = loadUsers();
-      const deviceId = localStorage.getItem("registeredOnce");
 
       if (!username || !password) {
-        document.getElementById("login-error").innerText = "Không được để trống.";
+        document.getElementById('login-error').innerText = 'Không được để trống.';
         return;
       }
-
-      if (deviceId) {
-        document.getElementById("login-error").innerText = "Thiết bị này đã đăng ký tài khoản.";
-        return;
-      }
-
       if (users[username]) {
-        document.getElementById("login-error").innerText = "Tài khoản đã tồn tại.";
+        document.getElementById('login-error').innerText = 'Tài khoản đã tồn tại.';
+      } else {
+        users[username] = password;
+        saveUsers(users);
+        document.getElementById('login-error').innerText = 'Đăng ký thành công. Bạn có thể đăng nhập.';
+      }
+    }
+
+    function handleLogout() {
+      logout();
+      updateUI();
+    }
+
+    function addSpinsToAllUsers() {
+      const user = getLoggedInUser();
+      if (!isAdmin(user)) return;
+
+      const bonus = parseInt(document.getElementById('bonusCount').value);
+      if (isNaN(bonus) || bonus <= 0) {
+        alert('Vui lòng nhập số lượt hợp lệ.');
         return;
       }
 
-      users[username] = password;
-      saveUsers(users);
-      localStorage.setItem("registeredOnce", "yes");
-      document.getElementById("login-error").innerText = "Đăng ký thành công. Vui lòng đăng nhập.";
-    }
+      const usage = JSON.parse(localStorage.getItem('usage') || '{}');
+      const today = new Date().toISOString().split('T')[0];
 
-    function showApp() {
-      document.getElementById("login-section").classList.add("hidden");
-      document.getElementById("app-section").classList.remove("hidden");
-      document.getElementById("welcome").innerText = "Xin chào, " + currentUser;
-
-      if (currentUser === ADMIN_USER) {
-        document.getElementById("admin-section").classList.remove("hidden");
+      for (let u in usage) {
+        if (usage[u].date === today) {
+          usage[u].count = Math.max(usage[u].count - bonus, 0);
+        }
       }
 
-      initUserData();
-      updateSpinText();
-      loadResults();
+      localStorage.setItem('usage', JSON.stringify(usage));
+      document.getElementById('remaining').innerText = 'Đã cộng lượt thành công.';
     }
 
-    function initUserData() {
-      const data = getUserData();
-      if (!data[currentUser]) {
-        data[currentUser] = { spins: 1, results: [] };
-        saveUserData(data);
-      }
-    }
-
-    function updateSpinText() {
-      const data = getUserData();
-      const spins = data[currentUser]?.spins ?? 0;
-      document.getElementById("spin-count").innerText = "Số lượt còn lại: " + spins;
-    }
-
-    function addSpinsToAll() {
-      const amount = parseInt(document.getElementById("add-spins").value);
-      if (isNaN(amount) || amount <= 0) return alert("Nhập số lượt hợp lệ");
-
-      const data = getUserData();
-      for (let user in data) {
-        data[user].spins = (data[user].spins || 0) + amount;
-      }
-      saveUserData(data);
-      alert("Đã cộng " + amount + " lượt quay cho tất cả!");
-      updateSpinText();
-    }
-
-    function generateResult() {
-      const md5 = document.getElementById("md5-input").value.trim().toLowerCase();
-      if (!/^[a-f0-9]{32}$/.test(md5)) {
-        alert("Mã MD5 không hợp lệ.");
-        return;
+    function generateRandomResult(md5Hash) {
+      if (typeof md5Hash !== 'string' || md5Hash.length !== 32 || !/^[0-9a-f]{32}$/i.test(md5Hash)) {
+        throw new Error("Mã MD5 không hợp lệ. Vui lòng nhập chuỗi MD5 gồm 32 ký tự hexa.");
       }
 
-      const data = getUserData();
-      const user = data[currentUser];
+      let number = BigInt('0x' + md5Hash);
+      let num1 = Number((number % 6n) + 1n);
+      number = (number * 3n + 7n) % 10000000000n;
+      let num2 = Number((number % 6n) + 1n);
+      number = ((number - 5n) * 2n) % 10000000000n;
+      let num3 = Number((number % 6n) + 1n);
 
-      if (currentUser !== ADMIN_USER && user.spins <= 0) {
-        alert("Bạn đã hết lượt quay.");
-        return;
-      }
+      const mapping = { 1: '3', 2: '2', 3: '1', 4: '5', 5: '6', 6: '4' };
+      const mapped = [mapping[num1], mapping[num2], mapping[num3]];
 
-      const result = createResultFromMD5(md5);
-      user.results.unshift(result);
-      if (user.results.length > MAX_RESULTS) user.results.pop();
-
-      if (currentUser !== ADMIN_USER) user.spins--;
-
-      saveUserData(data);
-      loadResults();
-      updateSpinText();
-      document.getElementById("md5-input").value = ""; // Xóa input
-    }
-
-    function createResultFromMD5(md5_hash) {
-      const mapping = { 1: "3", 2: "2", 3: "1", 4: "5", 5: "6", 6: "4" };
-      let number = parseInt(md5_hash, 16);
-
-      const nums = [];
-      for (let i = 0; i < 3; i++) {
-        number = (number * 3 + 7 + i * 2) % (10 ** 10);
-        nums.push(mapping[(number % 6) + 1]);
-      }
-
-      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
+      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:',.<>/?";
       let randomStr = "";
       for (let i = 0; i < 30; i++) {
         randomStr += chars.charAt(Math.floor(Math.random() * chars.length));
       }
 
-      return `${nums.join("-")}|${randomStr}`;
+      return `${mapped.join('-')}|${randomStr}`;
     }
 
-    function loadResults() {
-      const data = getUserData();
-      const results = data[currentUser]?.results || [];
-      const ul = document.getElementById("results");
-      ul.innerHTML = "";
+    function handleGenerate() {
+      const md5 = document.getElementById('md5Input').value.trim();
+      const user = getLoggedInUser();
+      const resultDiv = document.getElementById('result');
+      const errorDiv = document.getElementById('error');
+      const remainingDiv = document.getElementById('remaining');
+      resultDiv.innerText = '';
+      errorDiv.innerText = '';
 
-      results.forEach((res, index) => {
-        const li = document.createElement("li");
-        li.innerText = `${index + 1}. ${res}`;
-        if (index === 0) li.classList.add("red");
-        ul.appendChild(li);
+      if (!user) {
+        errorDiv.innerText = 'Bạn chưa đăng nhập.';
+        return;
+      }
+
+      const usage = JSON.parse(localStorage.getItem('usage') || '{}');
+      const used = usage[user]?.count || 0;
+      const remaining = MAX_GUESSES - used;
+
+      if (!isAdmin(user) && remaining <= 0 && used > 0) {
+        errorDiv.innerText = 'Bạn chỉ còn 1 lượt miễn phí hôm nay và đã dùng rồi.';
+        return;
+      }
+
+      try {
+        const result = generateRandomResult(md5.toLowerCase());
+        resultDiv.innerText = '✅ Kết quả: ' + result;
+
+        // Xoá ô nhập MD5
+        document.getElementById('md5Input').value = '';
+
+        if (!isAdmin(user)) {
+          if (!(user in usage)) usage[user] = { date: new Date().toISOString().split('T')[0], count: 0 };
+          usage[user].count += 1;
+          localStorage.setItem('usage', JSON.stringify(usage));
+        }
+
+        saveToHistory(user, result);
+        updateHistory();
+
+        remainingDiv.innerText = isAdmin(user)
+          ? 'Bạn là admin: Không giới hạn lượt'
+          : `Số lượt còn lại: ${getRemaining(user)}`;
+      } catch (e) {
+        errorDiv.innerText = '❌ Lỗi: ' + e.message;
+      }
+    }
+
+    function saveToHistory(user, result) {
+      let history = JSON.parse(localStorage.getItem('history_' + user) || '[]');
+      history.unshift(result);
+      if (history.length > 10) history = history.slice(0, 10);
+      localStorage.setItem('history_' + user, JSON.stringify(history));
+    }
+
+    function updateHistory() {
+      const user = getLoggedInUser();
+      const container = document.getElementById('history-list');
+      const history = JSON.parse(localStorage.getItem('history_' + user) || '[]');
+      container.innerHTML = '';
+      history.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = 'history-item' + (index === 0 ? ' latest' : '');
+        div.textContent = `${index + 1}. ${item}`;
+        container.appendChild(div);
       });
     }
 
-    window.onload = () => {
-      const user = localStorage.getItem("loggedInUser");
+    function updateUI() {
+      const user = getLoggedInUser();
       if (user) {
-        currentUser = user;
-        showApp();
+        document.getElementById('login-form').classList.add('hidden');
+        document.getElementById('main-app').classList.remove('hidden');
+        document.getElementById('current-user').innerText = user;
+        document.getElementById('remaining').innerText = isAdmin(user)
+          ? 'Bạn là admin: Không giới hạn lượt'
+          : `Số lượt còn lại: ${getRemaining(user)}`;
+        document.getElementById('admin-panel').classList.toggle('hidden', !isAdmin(user));
+        updateHistory();
+      } else {
+        document.getElementById('login-form').classList.remove('hidden');
+        document.getElementById('main-app').classList.add('hidden');
       }
-    };
+    }
+
+    updateUI();
   </script>
 </body>
 </html>
