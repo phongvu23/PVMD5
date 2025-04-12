@@ -1,19 +1,3 @@
-Để cho phép tài khoản admin thay đổi được các số trong `const mapping`, bạn có thể thêm một giao diện người dùng cho phép admin nhập các giá trị mới và lưu chúng trong `localStorage`. Điều này đồng nghĩa với việc bạn sẽ cần làm cho các giá trị này có thể sửa đổi từ giao diện khi admin đăng nhập.
-
-Dưới đây là các bước thực hiện cần thiết để hoàn thiện yêu cầu đó:
-
-### 1. Thêm giao diện cho việc thay đổi `mapping`
-Bạn cần thêm một phần trong `admin-panel` để admin nhập các giá trị mới cho `mapping`.
-
-### 2. Lưu giá trị mới vào `localStorage`
-Khi admin nhập các giá trị mới, bạn sẽ lưu chúng trong `localStorage` để chúng có thể được truy cập sau này.
-
-### 3. Sử dụng giá trị từ `localStorage`
-Thay vì sử dụng các giá trị đã mã hóa cứng trong `const mapping`, bạn sẽ lấy chúng từ `localStorage` khi cần.
-
-Dưới đây là phiên bản cập nhật của mã HTML:
-
-```html
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -64,12 +48,12 @@ Dưới đây là phiên bản cập nhật của mã HTML:
       <div id="userList"></div>
 
       <h3>Cập nhật giá trị mapping:</h3>
-      <input type="text" id="mapping1" placeholder="Giá trị cho 1" style="width: 100px;">
-      <input type="text" id="mapping2" placeholder="Giá trị cho 2" style="width: 100px;">
-      <input type="text" id="mapping3" placeholder="Giá trị cho 3" style="width: 100px;">
-      <input type="text" id="mapping4" placeholder="Giá trị cho 4" style="width: 100px;">
-      <input type="text" id="mapping5" placeholder="Giá trị cho 5" style="width: 100px;">
-      <input type="text" id="mapping6" placeholder="Giá trị cho 6" style="width: 100px;">
+      <input type="text" id=1"mapping1" placeholder="Giá trị cho 1" style="width: 100px;">
+      <input type="text" id=2"mapping2" placeholder="Giá trị cho 2" style="width: 100px;">
+      <input type="text" id=3"mapping3" placeholder="Giá trị cho 3" style="width: 100px;">
+      <input type="text" id=4"mapping4" placeholder="Giá trị cho 4" style="width: 100px;">
+      <input type="text" id=5"mapping5" placeholder="Giá trị cho 5" style="width: 100px;">
+      <input type="text" id=6"mapping6" placeholder="Giá trị cho 6" style="width: 100px;">
       <button onclick="saveMapping()">Lưu mapping</button>
     </div>
 
@@ -357,12 +341,3 @@ Dưới đây là phiên bản cập nhật của mã HTML:
   </script>
 </body>
 </html>
-```
-
-### Các thay đổi chính:
-1. **Thêm giao diện cho việc cập nhật mapping**: Giao diện cho phép admin nhập các giá trị tương ứng với số 1 đến số 6. Admin có thể thay đổi chúng và lưu lại.
-2. **Lưu mapping vào `localStorage`**: Hàm `saveMapping` sẽ lưu các giá trị mapping mới vào `localStorage`.
-3. **Lấy mapping từ `localStorage`**: Hàm `getMapping` sẽ lấy các giá trị từ `localStorage`. Nếu không có giá trị nào, hàm sẽ trả về giá trị mặc định.
-4. **Tải giá trị mapping hiện tại cho admin**: Hàm `loadCurrentMapping` sẽ tự động điền các giá trị hiện tại vào các ô nhập.
-
-Bây giờ, khi admin muốn thay đổi giá trị trong `mapping`, họ có thể nhập các giá trị mới và nhấn nút "Lưu mapping".
