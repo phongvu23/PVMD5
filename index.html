@@ -91,6 +91,7 @@
     <!-- Lịch sử -->
     <div class="history">
       <h3>Lịch sử kết quả gần nhất:</h3>
+      <button onclick="clearHistory()">🗑️ Xóa Lịch Sử</button>
       <div id="history-list"></div>
     </div>
   </div>
@@ -407,6 +408,19 @@
         div.textContent = `${index + 1}. ${item}`;
         container.appendChild(div);
       });
+    }
+
+    function clearHistory() {
+      const user = getLoggedInUser();
+      if (!user) {
+        alert('Bạn phải đăng nhập để xóa lịch sử.');
+        return;
+      }
+
+      // Xóa lịch sử
+      localStorage.removeItem('history_' + user);
+      updateHistory(); // Cập nhật lại giao diện sau khi xóa
+      alert('Đã xóa lịch sử kết quả gần nhất.');
     }
 
     function updateUI() {
