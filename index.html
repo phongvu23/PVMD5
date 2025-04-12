@@ -39,8 +39,8 @@
     <!-- Admin Panel -->
     <div id="admin-panel" class="hidden">
       <input type="text" id="userToBonus" placeholder="Nhập tên người dùng" style="width: 200px;">
-      <input type="number" id="bonusCount" placeholder="Nhập số điểm muốn cộng" style="width: 200px;">
-      <button onclick="addBonusToUser()">➕ Cộng điểm cho người dùng</button>
+      <input type="number" id="bonusCount" placeholder="Nhập số điểm muốn trừ" style="width: 200px;">
+      <button onclick="addBonusToUser()">➖ Trừ điểm cho người dùng</button>
       
       <h3>Danh sách người dùng:</h3>
       <div id="userList"></div>
@@ -178,15 +178,15 @@
         usage[usernameToBonus] = { count: 0 }; // Đảm bảo khởi tạo cho người dùng nếu chưa có
       }
 
-      // Cộng điểm
-      usage[usernameToBonus].count += bonus;
+      // Trừ điểm
+      usage[usernameToBonus].count -= bonus;
 
       // Lưu lại usage
       localStorage.setItem('usage', JSON.stringify(usage));
 
       updateUserList(); // Cập nhật danh sách người dùng
 
-      alert(`Đã cộng ${bonus} điểm thành công cho người dùng ${usernameToBonus}.`);
+      alert(`Đã trừ ${bonus} điểm thành công cho người dùng ${usernameToBonus}.`);
     }
 
     function updateUserList() {
