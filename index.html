@@ -157,31 +157,38 @@
 
     function addBonusToUser() {
       const user = getLoggedInUser();
-      if (!isAdmin(user)) return;
+      if (!isAdmin(user)) return; // Kiểm tra xem người dùng có phải admin không
 
       const usernameToBonus = document.getElementById('userToBonus').value.trim();
       const bonus = parseInt(document.getElementById('bonusCount').value);
       
       const users = loadUsers();
-      if (!users[usernameToBonus]) {
-        alert('Người dùng không tồn tại.');
+      
+      // Kiểm tra người dùng có tồn tại trong hệ thống
+      if (!users.hasOwnProperty(usernameToBonus)) {
+        alert('Người dùng không tồn tại. Vui lòng kiểm tra lại tên người dùng.');
         return;
       }
 
+      // Kiểm tra giá trị bonus hợp lệ
       if (isNaN(bonus) || bonus <= 0) {
         alert('Vui lòng nhập số điểm hợp lệ.');
         return;
       }
 
+      // Cập nhật số điểm cho người dùng
       const usage = JSON.parse(localStorage.getItem('usage') || '{}');
       if (!usage[usernameToBonus]) {
+        // Nếu người dùng chưa có, khởi tạo
         usage[usernameToBonus] = { date: new Date().toISOString().split('T')[0], count: 0 };
       }
 
+      // Cộng điểm
       usage[usernameToBonus].count += bonus;
       localStorage.setItem('usage', JSON.stringify(usage));
+      
       document.getElementById('remaining').innerText = 'Đã cộng điểm thành công cho người dùng.';
-      updateUserList();
+      updateUserList(); // Cập nhật danh sách người dùng
     }
 
     function updateUserList() {
@@ -260,7 +267,7 @@
       const remaining = MAX_GUESSES - used;
 
       if (!isAdmin(user) && remaining <= 0 && used > 0) {
-        errorDiv.innerText = 'Tối đa số lượt sử dụng đã hết. Vui lòng liên hệ với admin.';
+        errorDiv.innerText = 'Bạn chỉ còn 1 lượt miễn phí hôm nay và đã dùng rồi.';
         return;
       }
 
