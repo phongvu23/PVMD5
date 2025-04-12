@@ -160,14 +160,30 @@
       const password = document.getElementById('password').value;
       const users = loadUsers();
 
+      // Sử dụng IP giả định (Thay bằng phương thức thu thập IP thực tế)
+      const userIp = localStorage.getItem('userIp') || '192.168.1.1'; 
+
+      // Lưu địa chỉ IP vào localStorage nếu chưa có
+      if (!localStorage.getItem('userIp')) {
+        localStorage.setItem('userIp', userIp);
+      }
+
       if (!username || !password) {
         document.getElementById('login-error').innerText = 'Không được để trống.';
         return;
       }
+
+      // Kiểm tra số lượng tài khoản đã đăng ký cùng một địa chỉ IP
+      const userIpCount = Object.values(users).filter(user => user.ip === userIp).length;
+      if (userIpCount >= 1) {
+        document.getElementById('login-error').innerText = 'Địa chỉ IP này đã đăng ký tài khoản.';
+        return;
+      }
+
       if (users[username]) {
         document.getElementById('login-error').innerText = 'Tài khoản đã tồn tại.';
       } else {
-        users[username] = { password: password, locked: false }; // Lưu trạng thái khóa
+        users[username] = { password: password, locked: false, ip: userIp }; // Lưu địa chỉ IP
         saveUsers(users);
         document.getElementById('login-error').innerText = 'Đăng ký thành công. Bạn có thể đăng nhập.';
       }
