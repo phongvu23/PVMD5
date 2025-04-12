@@ -77,7 +77,6 @@
         <button onclick="registerNewUser()">Đăng ký</button>
         <div id="register-error" style="color: red;"></div>
       </div>
-
     </div>
 
     <!-- Dự đoán -->
@@ -190,12 +189,6 @@
       const password = document.getElementById('password').value;
       const users = loadUsers();
 
-      // Kiểm tra xem người dùng có phải là admin không
-      if (getLoggedInUser() !== 'phongvu') {
-          document.getElementById('login-error').innerText = 'Chỉ admin (phongvu) mới có quyền đăng ký tài khoản cho người dùng.';
-          return;
-      }
-
       if (!username || !password) {
         document.getElementById('login-error').innerText = 'Không được để trống.';
         return;
@@ -204,7 +197,7 @@
       if (users[username]) {
         document.getElementById('login-error').innerText = 'Tài khoản đã tồn tại.';
       } else {
-        users[username] = { password: password, locked: false, ip: localStorage.getItem('userIp') || '192.168.1.1' };
+        users[username] = { password: password, locked: false, ip: localStorage.getItem('userIp') || '192.168.1.1' }; // Lưu địa chỉ IP
         saveUsers(users);
         document.getElementById('login-error').innerText = 'Đăng ký thành công. Bạn có thể đăng nhập.';
       }
