@@ -115,7 +115,7 @@
         const remaining = MAX_GUESSES - used;
         return remaining > 0 ? remaining : 1; // luôn có ít nhất 1 lượt miễn phí
       }
-      return MAX_GUESSES;
+      return MAX_GUESSES; // Nếu người dùng không có trong usage, trả về MAX_GUESSES
     }
 
     function handleLogin() {
@@ -143,6 +143,7 @@
       if (users[username]) {
         document.getElementById('login-error').innerText = 'Tài khoản đã tồn tại.';
       } else {
+        // Đăng ký thành công
         users[username] = password;
         saveUsers(users);
         document.getElementById('login-error').innerText = 'Đăng ký thành công. Bạn có thể đăng nhập.';
@@ -259,7 +260,7 @@
       const remaining = MAX_GUESSES - used;
 
       if (!isAdmin(user) && remaining <= 0 && used > 0) {
-        errorDiv.innerText = 'Bạn chỉ còn 1 lượt miễn phí hôm nay và đã dùng rồi.';
+        errorDiv.innerText = 'Tối đa số lượt sử dụng đã hết. Vui lòng liên hệ với admin.';
         return;
       }
 
