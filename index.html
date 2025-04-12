@@ -88,10 +88,10 @@
     function setLogin(username) {
       localStorage.setItem('loggedInUser', username);
       if (!isAdmin(username)) {
-        // Không khởi tạo usage cho người dùng mới
         const usage = JSON.parse(localStorage.getItem('usage') || '{}');
+        // Không khởi tạo giá trị cho người dùng mới
         if (!usage[username]) {
-          usage[username] = { date: null, count: 0 }; // Không có lượt tạo kết quả khi mới đăng ký
+          usage[username] = { count: 0 }; // Người dùng mới không được cấp lượt tạo kết quả ngay lập tức
           localStorage.setItem('usage', JSON.stringify(usage));
         }
       }
@@ -109,11 +109,9 @@
       if (isAdmin(username)) return 'Không giới hạn';
       const usage = JSON.parse(localStorage.getItem('usage') || '{}');
       if (usage[username]) {
-        const used = usage[username].count;
-        const remaining = MAX_GUESSES - used;
-        return remaining > 0 ? remaining : 1; // Nếu không còn lượt nào, trả về 1
+        return MAX_GUESSES - usage[username].count; // Trả về số lượt còn lại
       }
-      return 0; // Nếu người dùng không có lượt nào
+      return 0; // Người dùng mới sẽ có 0 lượt
     }
 
     function handleLogin() {
@@ -177,7 +175,7 @@
       // Lấy thông tin usage hiện tại
       const usage = JSON.parse(localStorage.getItem('usage') || '{}');
       if (!usage[usernameToBonus]) {
-        usage[usernameToBonus] = { date: new Date().toISOString().split('T')[0], count: 0 };
+        usage[usernameToBonus] = { count: 0 }; // Đảm bảo khởi tạo cho người dùng nếu chưa có
       }
 
       // Cộng điểm
@@ -266,7 +264,7 @@
       const used = usage[user]?.count || 0;
       const remaining = MAX_GUESSES - used;
 
-      // Kiểm tra điều kiện sử dụng cho người dùng mới
+      // Kiểm tra điều kiện cho người dùng mới
       if (remaining <= 0) {
         errorDiv.innerText = 'Bạn không có lượt nào. Vui lòng yêu cầu admin cộng điểm.';
         return;
@@ -279,6 +277,7 @@
         // Xoá ô nhập MD5
         document.getElementById('md5Input').value = '';
 
+        // Tăng số lượt đã sử dụng chỉ nếu không phải admin
         if (!isAdmin(user)) {
           usage[user].count += 1; // Tăng số lượt đã sử dụng
           localStorage.setItem('usage', JSON.stringify(usage));
