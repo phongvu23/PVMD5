@@ -105,110 +105,56 @@
   </div>
 
   <script>
-    const MAX_GUESSES = 10;
+    const API_URL = 'http://localhost:3000/api'; // Cập nhật địa chỉ API
 
-    function saveUsers(users) {
-      localStorage.setItem('users', JSON.stringify(users));
-    }
-
-    function loadUsers() {
-      return JSON.parse(localStorage.getItem('users') || '{}');
-    }
-
-    function isAdmin(username) {
-      return username === 'phongvu';
-    }
-
-    function setLogin(username) {
-      localStorage.setItem('loggedInUser', username);
-      if (!isAdmin(username)) {
-        const usage = JSON.parse(localStorage.getItem('usage') || '{}');
-        if (!usage[username]) {
-          usage[username] = { count: 0 };
-          localStorage.setItem('usage', JSON.stringify(usage));
-        }
-      }
-    }
-
-    function getLoggedInUser() {
-      return localStorage.getItem('loggedInUser');
-    }
-
-    function logout() {
-      localStorage.removeItem('loggedInUser');
-    }
-
-    function getRemaining(username) {
-      if (isAdmin(username)) return 'Không giới hạn';
-      const usage = JSON.parse(localStorage.getItem('usage') || '{}');
-      if (usage[username]) {
-        return MAX_GUESSES - usage[username].count;
-      }
-      return 0;
-    }
-
-    function handleLogin() {
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value;
-      const users = loadUsers();
-
-      if ((username === 'phongvu' && password === '123') || (users[username] && users[username].password === password)) {
-        if (users[username]?.locked) {
-          document.getElementById('login-error').innerText = 'Tài khoản của bạn đã bị khóa.';
-          return;
-        }
-        setLogin(username);
-        updateUI();
-      } else {
-        document.getElementById('login-error').innerText = 'Sai tài khoản hoặc mật khẩu.';
-      }
-    }
-
-    function registerNewUser() {
+    async function registerNewUser() {
       const username = document.getElementById('newUsername').value.trim();
       const password = document.getElementById('newPassword').value;
 
-      const users = loadUsers();
-      
-      // Kiểm tra xem tên người dùng đã tồn tại hay chưa
-      if (users[username]) {
-        document.getElementById('register-error').innerText = 'Tài khoản đã tồn tại.';
-        return;
+      try {
+        const response = await fetch(`${API_URL}/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await response.json();
+        
+        if (response.ok) {
+          document.getElementById('register-error').innerText = data.message;
+          document.getElementById('newUsername').value = '';
+          document.getElementById('newPassword').value = '';
+        } else {
+          document.getElementById('register-error').innerText = data.error;
+        }
+      } catch (error) {
+        document.getElementById('register-error').innerText = 'Lỗi khi kết nối đến server.';
       }
-      
-      // Đối với admin (phongvu), có thể tạo tài khoản mới
-      users[username] = { password: password, locked: false, ip: localStorage.getItem('userIp') || '192.168.1.1' }; // Lưu địa chỉ IP
-      saveUsers(users);
-      document.getElementById('register-error').innerText = 'Tài khoản đã được đăng ký thành công.';
-      document.getElementById('newUsername').value = '';
-      document.getElementById('newPassword').value = '';
     }
 
-    function handleRegister() {
+    async function handleLogin() {
       const username = document.getElementById('username').value.trim();
       const password = document.getElementById('password').value;
-      const users = loadUsers();
 
-      if (!username || !password) {
-        document.getElementById('login-error').innerText = 'Không được để trống.';
-        return;
-      }
+      try {
+        const response = await fetch(`${API_URL}/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await response.json();
 
-      if (users[username]) {
-        document.getElementById('login-error').innerText = 'Tài khoản đã tồn tại.';
-      } else {
-        users[username] = { password: password, locked: false, ip: localStorage.getItem('userIp') || '192.168.1.1' }; // Lưu địa chỉ IP
-        saveUsers(users);
-        document.getElementById('login-error').innerText = 'Đăng ký thành công. Bạn có thể đăng nhập.';
+        if (response.ok) {
+          setLogin(username);
+          updateUI();
+        } else {
+          document.getElementById('login-error').innerText = data.error;
+        }
+      } catch (error) {
+        document.getElementById('login-error').innerText = 'Lỗi khi kết nối đến server.';
       }
     }
 
-    function handleLogout() {
-      logout();
-      updateUI();
-    }
-
-    function addBonusToUser() {
+    async function addBonusToUser() {
       const user = getLoggedInUser();
       if (!isAdmin(user)) return;
 
@@ -216,224 +162,37 @@
       const bonus = parseInt(document.getElementById('bonusCount').value);
       const action = document.getElementById('bonusAction').value;
 
-      const users = loadUsers();
-
-      if (!users.hasOwnProperty(usernameToBonus)) {
-        alert('Người dùng không tồn tại. Vui lòng kiểm tra lại tên người dùng.');
-        return;
-      }
-
-      if (isNaN(bonus) || bonus <= 0) {
-        alert('Vui lòng nhập số điểm hợp lệ.');
-        return;
-      }
-
-      const usage = JSON.parse(localStorage.getItem('usage') || '{}');
-      if (!usage[usernameToBonus]) {
-        usage[usernameToBonus] = { count: 0 };
-      }
-
-      // Cộng hoặc trừ điểm dựa trên hành động đã chọn
-      if (action === "add") {
-        usage[usernameToBonus].count += bonus;
-      } else if (action === "subtract") {
-        usage[usernameToBonus].count -= bonus;
-      }
-
-      localStorage.setItem('usage', JSON.stringify(usage));
-      updateUserList();
-      alert(`Đã ${action === "add" ? "cộng" : "trừ"} ${bonus} điểm thành công cho người dùng ${usernameToBonus}.`);
-    }
-
-    function manageUser() {
-      const user = getLoggedInUser();
-      if (!isAdmin(user)) return;
-
-      const usernameToManage = document.getElementById('userToManage').value.trim();
-      const action = document.getElementById('manageAction').value;
-
-      const users = loadUsers();
-
-      if (!users.hasOwnProperty(usernameToManage)) {
-        alert('Người dùng không tồn tại. Vui lòng kiểm tra lại tên người dùng.');
-        return;
-      }
-
-      if (action === "lock") {
-        users[usernameToManage].locked = !users[usernameToManage].locked; // Đảo trạng thái khóa
-        alert(`Tài khoản ${usernameToManage} đã được ${users[usernameToManage].locked ? 'khóa' : 'mở khóa'}.`);
-      } else if (action === "delete") {
-        delete users[usernameToManage];
-        alert(`Người dùng ${usernameToManage} đã bị xóa.`);
-      }
-
-      saveUsers(users);
-      updateUserList();
-    }
-
-    function updateUserList() {
-      const users = loadUsers();
-      const userListDiv = document.getElementById('userList');
-      userListDiv.innerHTML = '';
-
-      for (const username in users) {
-        const isLoggedIn = (getLoggedInUser() === username);
-        const dotColor = isLoggedIn ? 'green' : users[username].locked ? 'red' : 'gray';
-        const statusClass = users[username].locked ? 'locked' : 'active';
-        const remaining = getRemaining(username);
-
-        const div = document.createElement('div');
-        div.innerHTML = `<span class="status-dot" style="background-color: ${dotColor};"></span><span class="user-status ${statusClass}">${username} - Trạng thái: ${users[username].locked ? 'Đã khóa' : 'Hoạt động'} - Số điểm còn lại: ${remaining}</span>`;
-        userListDiv.appendChild(div);
-      }
-    }
-
-    function saveMapping() {
-      const mapping = {
-        1: document.getElementById('mapping1').value,
-        2: document.getElementById('mapping2').value,
-        3: document.getElementById('mapping3').value,
-        4: document.getElementById('mapping4').value,
-        5: document.getElementById('mapping5').value,
-        6: document.getElementById('mapping6').value
-      };
-      localStorage.setItem('customMapping', JSON.stringify(mapping));
-      alert('Đã lưu giá trị mapping.');
-    }
-
-    function getMapping() {
-      return JSON.parse(localStorage.getItem('customMapping') || JSON.stringify({ 1: '3', 2: '2', 3: '1', 4: '5', 5: '6', 6: '4' }));
-    }
-
-    function generateRandomResult(md5Hash) {
-      if (typeof md5Hash !== 'string' || md5Hash.length !== 32 || !/^[0-9a-f]{32}$/i.test(md5Hash)) {
-        throw new Error("Mã MD5 không hợp lệ. Vui lòng nhập chuỗi MD5 gồm 32 ký tự hexa.");
-      }
-
-      let number = BigInt('0x' + md5Hash); 
-      let num1 = Number((number % 6n) + 1n);
-      number = (number * 3n + 7n) % 10000000000n;
-      let num2 = Number((number % 6n) + 1n);
-      number = ((number - 5n) * 2n) % 10000000000n;
-      let num3 = Number((number % 6n) + 1n);
-
-      const mapping = getMapping();
-      const mapped = [mapping[num1], mapping[num2], mapping[num3]];
-
-      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:',.<>/?";
-      let randomStr = "";
-      for (let i = 0; i < 30; i++) {
-        randomStr += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-
-      return { result: `${mapped.join('-')}|${randomStr}`, original: mapped };
-    }
-
-    function handleGenerate() {
-      const md5 = document.getElementById('md5Input').value.trim();
-      const user = getLoggedInUser();
-      const resultDiv = document.getElementById('result');
-      const errorDiv = document.getElementById('error');
-      const remainingDiv = document.getElementById('remaining');
-      resultDiv.innerText = '';
-      errorDiv.innerText = '';
-
-      if (!user) {
-        errorDiv.innerText = 'Bạn chưa đăng nhập.';
-        return;
-      }
-
-      const usage = JSON.parse(localStorage.getItem('usage') || '{}');
-      const used = usage[user]?.count || 0;
-      const remaining = MAX_GUESSES - used;
-
-      if (remaining <= 0) {
-        errorDiv.innerText = 'Bạn không có lượt nào. Vui lòng yêu cầu admin cộng điểm.';
-        return;
-      }
-
       try {
-        const { result, original } = generateRandomResult(md5.toLowerCase());
-        resultDiv.innerText = '✅ Kết quả: ' + result;
+        const response = await fetch(`${API_URL}/addPoints`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: usernameToBonus, points: action === 'add' ? bonus : -bonus })
+        });
+        const data = await response.json();
         
-        // Hiện ô nhập số thay thế
-        document.getElementById('replaceMapping').classList.remove('hidden');
-        
-        document.getElementById('md5Input').value = '';
-
-        if (!isAdmin(user)) {
-          usage[user].count += 1; 
-          localStorage.setItem('usage', JSON.stringify(usage));
+        if (response.ok) {
+          alert(data.message);
+          updateUserList();
+        } else {
+          alert(data.error);
         }
-
-        saveToHistory(user, result);
-        updateHistory();
-        
-        remainingDiv.innerText = isAdmin(user)
-          ? 'Bạn là admin: Không giới hạn lượt'
-          : `Số lượt còn lại: ${getRemaining(user)}`;
-      } catch (e) {
-        errorDiv.innerText = '❌ Lỗi: ' + e.message;
+      } catch (error) {
+        alert('Lỗi khi kết nối đến server.');
       }
     }
 
-    function applyReplacement() {
-      const replacement1 = parseInt(document.getElementById('replacement1').value);
-      const replacement2 = parseInt(document.getElementById('replacement2').value);
-      const replacement3 = parseInt(document.getElementById('replacement3').value);
-      
-      if (isNaN(replacement1) || isNaN(replacement2) || isNaN(replacement3)) {
-        alert("Vui lòng nhập cả 3 số hợp lệ.");
-        return;
-      }
-      
-      const resultDiv = document.getElementById('result');
-      const originalResult = resultDiv.innerText.split('✅ Kết quả: ')[1];
-      const mappedParts = originalResult.split('|')[0].split('-');
-
-      // Áp dụng số thay thế
-      mappedParts[0] = replacement1;
-      mappedParts[1] = replacement2;
-      mappedParts[2] = replacement3;
-      
-      const newResult = `${mappedParts.join('-')}|${originalResult.split('|')[1]}`;
-      resultDiv.innerText = '✅ Kết quả sau khi thay thế: ' + newResult;
-
-      // Ẩn ô nhập sau khi áp dụng
-      document.getElementById('replaceMapping').classList.add('hidden');
-    }
-    
-    function saveToHistory(user, result) {
-      let history = JSON.parse(localStorage.getItem('history_' + user) || '[]');
-      history.unshift(result);
-      if (history.length > 10) history = history.slice(0, 10);
-      localStorage.setItem('history_' + user, JSON.stringify(history));
+    function setLogin(username) {
+      localStorage.setItem('loggedInUser', username);
+      // Các logic khác nếu cần
     }
 
-    function updateHistory() {
-      const user = getLoggedInUser();
-      const container = document.getElementById('history-list');
-      const history = JSON.parse(localStorage.getItem('history_' + user) || '[]');
-      container.innerHTML = '';
-      history.forEach((item, index) => {
-        const div = document.createElement('div');
-        div.className = 'history-item' + (index === 0 ? ' latest' : '');
-        div.textContent = `${index + 1}. ${item}`;
-        container.appendChild(div);
-      });
+    function getLoggedInUser() {
+      return localStorage.getItem('loggedInUser');
     }
 
-    function clearHistory() {
-      const user = getLoggedInUser();
-      if (!user) {
-        alert('Bạn phải đăng nhập để xóa lịch sử.');
-        return;
-      }
-
-      // Xóa lịch sử
-      localStorage.removeItem('history_' + user);
-      updateHistory(); // Cập nhật lại giao diện sau khi xóa
-      alert('Đã xóa lịch sử kết quả gần nhất.');
+    function handleLogout() {
+      localStorage.removeItem('loggedInUser');
+      updateUI();
     }
 
     function updateUI() {
@@ -442,35 +201,18 @@
         document.getElementById('login-form').classList.add('hidden');
         document.getElementById('main-app').classList.remove('hidden');
         document.getElementById('current-user').innerText = user;
-        document.getElementById('remaining').innerText = isAdmin(user)
-          ? 'Bạn là admin: Không giới hạn lượt'
-          : `Số lượt còn lại: ${getRemaining(user)}`;
-
-        document.getElementById('admin-panel').classList.toggle('hidden', !isAdmin(user));
-        
-        // Hiển thị mục đăng ký tài khoản khi là admin
-        document.getElementById('register-user').classList.toggle('hidden', !isAdmin(user));
-        
-        updateUserList(); 
-        loadCurrentMapping(); 
-        updateHistory();
+        updateUserList();
       } else {
         document.getElementById('login-form').classList.remove('hidden');
         document.getElementById('main-app').classList.add('hidden');
       }
     }
 
-    function loadCurrentMapping() {
-      const mapping = getMapping();
-      document.getElementById('mapping1').value = mapping[1];
-      document.getElementById('mapping2').value = mapping[2];
-      document.getElementById('mapping3').value = mapping[3];
-      document.getElementById('mapping4').value = mapping[4];
-      document.getElementById('mapping5').value = mapping[5];
-      document.getElementById('mapping6').value = mapping[6];
+    function updateUserList() {
+      // Code để cập nhật danh sách người dùng, có thể gọi API để lấy danh sách người dùng
     }
 
-    updateUI();
+    // Hãy đảm bảo cập nhật các hàm khác trong mã của bạn để tích hợp với hệ thống quản lý người dùng.
   </script>
 </body>
 </html>
