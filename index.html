@@ -179,7 +179,7 @@
       // Cập nhật số điểm cho người dùng
       const usage = JSON.parse(localStorage.getItem('usage') || '{}');
       if (!usage[usernameToBonus]) {
-        // Nếu người dùng chưa có, khởi tạo
+        // Nếu người dùng chưa có trong usage, khởi tạo
         usage[usernameToBonus] = { date: new Date().toISOString().split('T')[0], count: 0 };
       }
 
