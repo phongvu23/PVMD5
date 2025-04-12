@@ -39,8 +39,12 @@
     <!-- Admin Panel -->
     <div id="admin-panel" class="hidden">
       <input type="text" id="userToBonus" placeholder="Nhập tên người dùng" style="width: 200px;">
-      <input type="number" id="bonusCount" placeholder="Nhập số điểm muốn trừ" style="width: 200px;">
-      <button onclick="addBonusToUser()">➖ Trừ điểm cho người dùng</button>
+      <input type="number" id="bonusCount" placeholder="Nhập số điểm" style="width: 200px;">
+      <select id="bonusAction">
+        <option value="add">Cộng điểm</option>
+        <option value="subtract">Trừ điểm</option>
+      </select>
+      <button onclick="addBonusToUser()">✅ Xác nhận</button>
       
       <h3>Danh sách người dùng:</h3>
       <div id="userList"></div>
@@ -89,9 +93,8 @@
       localStorage.setItem('loggedInUser', username);
       if (!isAdmin(username)) {
         const usage = JSON.parse(localStorage.getItem('usage') || '{}');
-        // Không khởi tạo giá trị cho người dùng mới
         if (!usage[username]) {
-          usage[username] = { count: 0 }; // Người dùng mới không được cấp lượt tạo kết quả ngay lập tức
+          usage[username] = { count: 0 };
           localStorage.setItem('usage', JSON.stringify(usage));
         }
       }
@@ -109,9 +112,9 @@
       if (isAdmin(username)) return 'Không giới hạn';
       const usage = JSON.parse(localStorage.getItem('usage') || '{}');
       if (usage[username]) {
-        return MAX_GUESSES - usage[username].count; // Trả về số lượt còn lại
+        return MAX_GUESSES - usage[username].count;
       }
-      return 0; // Người dùng mới sẽ có 0 lượt
+      return 0;
     }
 
     function handleLogin() {
@@ -139,7 +142,6 @@
       if (users[username]) {
         document.getElementById('login-error').innerText = 'Tài khoản đã tồn tại.';
       } else {
-        // Đăng ký thành công
         users[username] = password;
         saveUsers(users);
         document.getElementById('login-error').innerText = 'Đăng ký thành công. Bạn có thể đăng nhập.';
@@ -153,40 +155,39 @@
 
     function addBonusToUser() {
       const user = getLoggedInUser();
-      if (!isAdmin(user)) return; // Kiểm tra xem người dùng có phải admin không
+      if (!isAdmin(user)) return;
 
       const usernameToBonus = document.getElementById('userToBonus').value.trim();
       const bonus = parseInt(document.getElementById('bonusCount').value);
+      const action = document.getElementById('bonusAction').value;
       
       const users = loadUsers();
       
-      // Kiểm tra người dùng có tồn tại trong hệ thống
       if (!users.hasOwnProperty(usernameToBonus)) {
         alert('Người dùng không tồn tại. Vui lòng kiểm tra lại tên người dùng.');
         return;
       }
 
-      // Kiểm tra giá trị bonus hợp lệ
       if (isNaN(bonus) || bonus <= 0) {
         alert('Vui lòng nhập số điểm hợp lệ.');
         return;
       }
 
-      // Lấy thông tin usage hiện tại
       const usage = JSON.parse(localStorage.getItem('usage') || '{}');
       if (!usage[usernameToBonus]) {
-        usage[usernameToBonus] = { count: 0 }; // Đảm bảo khởi tạo cho người dùng nếu chưa có
+        usage[usernameToBonus] = { count: 0 };
       }
 
-      // Trừ điểm
-      usage[usernameToBonus].count -= bonus;
+      // Cộng hoặc trừ điểm dựa trên hành động đã chọn
+      if (action === "add") {
+        usage[usernameToBonus].count += bonus;
+      } else if (action === "subtract") {
+        usage[usernameToBonus].count -= bonus;
+      }
 
-      // Lưu lại usage
       localStorage.setItem('usage', JSON.stringify(usage));
-
-      updateUserList(); // Cập nhật danh sách người dùng
-
-      alert(`Đã trừ ${bonus} điểm thành công cho người dùng ${usernameToBonus}.`);
+      updateUserList();
+      alert(`Đã ${action === "add" ? "cộng" : "trừ"} ${bonus} điểm thành công cho người dùng ${usernameToBonus}.`);
     }
 
     function updateUserList() {
@@ -264,7 +265,6 @@
       const used = usage[user]?.count || 0;
       const remaining = MAX_GUESSES - used;
 
-      // Kiểm tra điều kiện cho người dùng mới
       if (remaining <= 0) {
         errorDiv.innerText = 'Bạn không có lượt nào. Vui lòng yêu cầu admin cộng điểm.';
         return;
@@ -274,12 +274,10 @@
         const result = generateRandomResult(md5.toLowerCase());
         resultDiv.innerText = '✅ Kết quả: ' + result;
 
-        // Xoá ô nhập MD5
         document.getElementById('md5Input').value = '';
 
-        // Tăng số lượt đã sử dụng chỉ nếu không phải admin
         if (!isAdmin(user)) {
-          usage[user].count += 1; // Tăng số lượt đã sử dụng
+          usage[user].count += 1; 
           localStorage.setItem('usage', JSON.stringify(usage));
         }
 
