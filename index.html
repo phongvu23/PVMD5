@@ -69,6 +69,15 @@
       <input type="text" id="mapping5" placeholder="Giá trị cho 5" style="width: 100px;">
       <input type="text" id="mapping6" placeholder="Giá trị cho 6" style="width: 100px;">
       <button onclick="saveMapping()">Lưu mapping</button>
+
+      <div id="register-user" class="hidden">
+        <h3>Đăng ký tài khoản mới:</h3>
+        <input type="text" id="newUsername" placeholder="Tên tài khoản mới">
+        <input type="password" id="newPassword" placeholder="Mật khẩu mới">
+        <button onclick="registerNewUser()">Đăng ký</button>
+        <div id="register-error" style="color: red;"></div>
+      </div>
+
     </div>
 
     <!-- Dự đoán -->
@@ -156,14 +165,33 @@
       }
     }
 
+    function registerNewUser() {
+      const username = document.getElementById('newUsername').value.trim();
+      const password = document.getElementById('newPassword').value;
+
+      const users = loadUsers();
+      
+      // Kiểm tra xem tên người dùng đã tồn tại hay chưa
+      if (users[username]) {
+        document.getElementById('register-error').innerText = 'Tài khoản đã tồn tại.';
+        return;
+      }
+      
+      // Đối với admin (phongvu), có thể tạo tài khoản mới
+      users[username] = { password: password, locked: false, ip: localStorage.getItem('userIp') || '192.168.1.1' }; // Lưu địa chỉ IP
+      saveUsers(users);
+      document.getElementById('register-error').innerText = 'Tài khoản đã được đăng ký thành công.';
+      document.getElementById('newUsername').value = '';
+      document.getElementById('newPassword').value = '';
+    }
+
     function handleRegister() {
       const username = document.getElementById('username').value.trim();
       const password = document.getElementById('password').value;
       const users = loadUsers();
-      const loggedInUser = getLoggedInUser();
 
       // Kiểm tra xem người dùng có phải là admin không
-      if (loggedInUser !== 'phongvu') {
+      if (getLoggedInUser() !== 'phongvu') {
           document.getElementById('login-error').innerText = 'Chỉ admin (phongvu) mới có quyền đăng ký tài khoản cho người dùng.';
           return;
       }
@@ -171,13 +199,6 @@
       if (!username || !password) {
         document.getElementById('login-error').innerText = 'Không được để trống.';
         return;
-      }
-
-      // Kiểm tra số lượng tài khoản đã đăng ký cùng một địa chỉ IP
-      const userIpCount = Object.values(users).filter(user => user.ip === (localStorage.getItem('userIp') || '192.168.1.1')).length;
-      if (userIpCount >= 1 && users[username] === undefined) {
-          document.getElementById('login-error').innerText = 'Địa chỉ IP này đã đăng ký tài khoản.';
-          return;
       }
 
       if (users[username]) {
@@ -433,6 +454,9 @@
           : `Số lượt còn lại: ${getRemaining(user)}`;
 
         document.getElementById('admin-panel').classList.toggle('hidden', !isAdmin(user));
+        
+        // Hiển thị mục đăng ký tài khoản khi là admin
+        document.getElementById('register-user').classList.toggle('hidden', !isAdmin(user));
         
         updateUserList(); 
         loadCurrentMapping(); 
