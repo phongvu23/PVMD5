@@ -5,7 +5,7 @@
   <title>MD5 Dự Đoán</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 30px; background: #f2f2f2; }
-    input, button { padding: 10px; margin: 5px; font-size: 16px; }
+    input, button, select { padding: 10px; margin: 5px; font-size: 16px; }
     .hidden { display: none; }
     #result, #error, #remaining { margin-top: 10px; font-weight: bold; }
     .history { margin-top: 20px; }
@@ -18,6 +18,9 @@
       display: inline-block;
       margin-right: 5px;
     }
+    .user-status { padding: 3px; border-radius: 5px; }
+    .active { background-color: lightgreen; }
+    .locked { background-color: lightcoral; }
   </style>
 </head>
 <body>
@@ -38,6 +41,7 @@
 
     <!-- Admin Panel -->
     <div id="admin-panel" class="hidden">
+      <h3>Quản lý người dùng:</h3>
       <input type="text" id="userToBonus" placeholder="Nhập tên người dùng" style="width: 200px;">
       <input type="number" id="bonusCount" placeholder="Nhập số điểm" style="width: 200px;">
       <select id="bonusAction">
@@ -46,6 +50,14 @@
       </select>
       <button onclick="addBonusToUser()">✅ Xác nhận</button>
       
+      <h3>Khóa hoặc xóa người dùng:</h3>
+      <input type="text" id="userToManage" placeholder="Nhập tên người dùng" style="width: 200px;">
+      <select id="manageAction">
+        <option value="lock">Khóa người dùng</option>
+        <option value="delete">Xóa người dùng</option>
+      </select>
+      <button onclick="manageUser()">✅ Thực hiện</button>
+
       <h3>Danh sách người dùng:</h3>
       <div id="userList"></div>
 
@@ -122,7 +134,11 @@
       const password = document.getElementById('password').value;
       const users = loadUsers();
 
-      if ((username === 'phongvu' && password === '123') || (users[username] && users[username] === password)) {
+      if ((username === 'phongvu' && password === '123') || (users[username] && users[username].password === password)) {
+        if (users[username]?.locked) {
+          document.getElementById('login-error').innerText = 'Tài khoản của bạn đã bị khóa.';
+          return;
+        }
         setLogin(username);
         updateUI();
       } else {
@@ -142,7 +158,7 @@
       if (users[username]) {
         document.getElementById('login-error').innerText = 'Tài khoản đã tồn tại.';
       } else {
-        users[username] = password;
+        users[username] = { password: password, locked: false }; // Lưu trạng thái khóa
         saveUsers(users);
         document.getElementById('login-error').innerText = 'Đăng ký thành công. Bạn có thể đăng nhập.';
       }
@@ -160,9 +176,9 @@
       const usernameToBonus = document.getElementById('userToBonus').value.trim();
       const bonus = parseInt(document.getElementById('bonusCount').value);
       const action = document.getElementById('bonusAction').value;
-      
+
       const users = loadUsers();
-      
+
       if (!users.hasOwnProperty(usernameToBonus)) {
         alert('Người dùng không tồn tại. Vui lòng kiểm tra lại tên người dùng.');
         return;
@@ -190,6 +206,32 @@
       alert(`Đã ${action === "add" ? "cộng" : "trừ"} ${bonus} điểm thành công cho người dùng ${usernameToBonus}.`);
     }
 
+    function manageUser() {
+      const user = getLoggedInUser();
+      if (!isAdmin(user)) return;
+
+      const usernameToManage = document.getElementById('userToManage').value.trim();
+      const action = document.getElementById('manageAction').value;
+
+      const users = loadUsers();
+
+      if (!users.hasOwnProperty(usernameToManage)) {
+        alert('Người dùng không tồn tại. Vui lòng kiểm tra lại tên người dùng.');
+        return;
+      }
+
+      if (action === "lock") {
+        users[usernameToManage].locked = !users[usernameToManage].locked; // Đảo trạng thái khóa
+        alert(`Tài khoản ${usernameToManage} đã được ${users[usernameToManage].locked ? 'khóa' : 'mở khóa'}.`);
+      } else if (action === "delete") {
+        delete users[usernameToManage];
+        alert(`Người dùng ${usernameToManage} đã bị xóa.`);
+      }
+
+      saveUsers(users);
+      updateUserList();
+    }
+
     function updateUserList() {
       const users = loadUsers();
       const userListDiv = document.getElementById('userList');
@@ -197,11 +239,12 @@
 
       for (const username in users) {
         const isLoggedIn = (getLoggedInUser() === username);
-        const dotColor = isLoggedIn ? 'green' : 'gray';
+        const dotColor = isLoggedIn ? 'green' : users[username].locked ? 'red' : 'gray';
+        const statusClass = users[username].locked ? 'locked' : 'active';
         const remaining = getRemaining(username);
 
         const div = document.createElement('div');
-        div.innerHTML = `<span class="status-dot" style="background-color: ${dotColor};"></span>${username} - Số điểm còn lại: ${remaining}`;
+        div.innerHTML = `<span class="status-dot" style="background-color: ${dotColor};"></span><span class="user-status ${statusClass}">${username} - Trạng thái: ${users[username].locked ? 'Đã khóa' : 'Hoạt động'} - Số điểm còn lại: ${remaining}</span>`;
         userListDiv.appendChild(div);
       }
     }
