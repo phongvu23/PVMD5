@@ -186,9 +186,12 @@
       // Cộng điểm
       usage[usernameToBonus].count += bonus;
       localStorage.setItem('usage', JSON.stringify(usage));
-      
-      document.getElementById('remaining').innerText = 'Đã cộng điểm thành công cho người dùng.';
-      updateUserList(); // Cập nhật danh sách người dùng
+
+      // Cập nhật danh sách người dùng để hiển thị điểm mới
+      updateUserList();
+
+      // Thông báo thành công
+      document.getElementById('remaining').innerText = `Đã cộng ${bonus} điểm thành công cho người dùng ${usernameToBonus}.`;
     }
 
     function updateUserList() {
