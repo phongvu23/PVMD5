@@ -81,7 +81,7 @@
 
     <!-- Ô nhập số thay thế -->
     <div id="replaceMapping" class="hidden">
-      <h3>Nhập Kết quả Chính xác của phiên trước:</h3>
+      <h3>Nhập 3 số để thay thế vào mapping:</h3>
       <input type="number" id="replacement1" placeholder="Số 1" style="width: 50px;">
       <input type="number" id="replacement2" placeholder="Số 2" style="width: 50px;">
       <input type="number" id="replacement3" placeholder="Số 3" style="width: 50px;">
@@ -160,13 +160,12 @@
       const username = document.getElementById('username').value.trim();
       const password = document.getElementById('password').value;
       const users = loadUsers();
+      const loggedInUser = getLoggedInUser();
 
-      // Sử dụng IP giả định (Thay bằng phương thức thu thập IP thực tế)
-      const userIp = localStorage.getItem('userIp') || '192.168.1.1'; 
-
-      // Lưu địa chỉ IP vào localStorage nếu chưa có
-      if (!localStorage.getItem('userIp')) {
-        localStorage.setItem('userIp', userIp);
+      // Kiểm tra xem người dùng có phải là admin không
+      if (loggedInUser !== 'phongvu') {
+          document.getElementById('login-error').innerText = 'Chỉ admin (phongvu) mới có quyền đăng ký tài khoản cho người dùng.';
+          return;
       }
 
       if (!username || !password) {
@@ -175,16 +174,16 @@
       }
 
       // Kiểm tra số lượng tài khoản đã đăng ký cùng một địa chỉ IP
-      const userIpCount = Object.values(users).filter(user => user.ip === userIp).length;
-      if (userIpCount >= 1) {
-        document.getElementById('login-error').innerText = 'Địa chỉ IP này đã đăng ký tài khoản.';
-        return;
+      const userIpCount = Object.values(users).filter(user => user.ip === (localStorage.getItem('userIp') || '192.168.1.1')).length;
+      if (userIpCount >= 1 && users[username] === undefined) {
+          document.getElementById('login-error').innerText = 'Địa chỉ IP này đã đăng ký tài khoản.';
+          return;
       }
 
       if (users[username]) {
         document.getElementById('login-error').innerText = 'Tài khoản đã tồn tại.';
       } else {
-        users[username] = { password: password, locked: false, ip: userIp }; // Lưu địa chỉ IP
+        users[username] = { password: password, locked: false, ip: localStorage.getItem('userIp') || '192.168.1.1' };
         saveUsers(users);
         document.getElementById('login-error').innerText = 'Đăng ký thành công. Bạn có thể đăng nhập.';
       }
@@ -229,7 +228,7 @@
 
       localStorage.setItem('usage', JSON.stringify(usage));
       updateUserList();
-      alert(`Đã ${action === "add" ? "trừ" : "cộng"} ${bonus} điểm thành công cho người dùng ${usernameToBonus}.`);
+      alert(`Đã ${action === "add" ? "cộng" : "trừ"} ${bonus} điểm thành công cho người dùng ${usernameToBonus}.`);
     }
 
     function manageUser() {
