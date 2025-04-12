@@ -11,8 +11,6 @@
     .history { margin-top: 20px; }
     .history-item { margin-bottom: 5px; }
     .latest { color: red; font-weight: bold; }
-    .online { color: green; }
-    .offline { color: gray; }
     .status-dot {
       height: 10px;
       width: 10px;
@@ -113,9 +111,9 @@
       if (usage[username]) {
         const used = usage[username].count;
         const remaining = MAX_GUESSES - used;
-        return remaining > 0 ? remaining : 1; // luôn có ít nhất 1 lượt miễn phí
+        return remaining > 0 ? remaining : 1;
       }
-      return MAX_GUESSES; // Nếu người dùng không có trong usage, trả về MAX_GUESSES
+      return MAX_GUESSES; 
     }
 
     function handleLogin() {
@@ -143,7 +141,6 @@
       if (users[username]) {
         document.getElementById('login-error').innerText = 'Tài khoản đã tồn tại.';
       } else {
-        // Đăng ký thành công
         users[username] = password;
         saveUsers(users);
         document.getElementById('login-error').innerText = 'Đăng ký thành công. Bạn có thể đăng nhập.';
@@ -157,40 +154,37 @@
 
     function addBonusToUser() {
       const user = getLoggedInUser();
-      if (!isAdmin(user)) return; // Kiểm tra xem người dùng có phải admin không
+      if (!isAdmin(user)) return; 
 
       const usernameToBonus = document.getElementById('userToBonus').value.trim();
       const bonus = parseInt(document.getElementById('bonusCount').value);
       
       const users = loadUsers();
       
-      // Kiểm tra người dùng có tồn tại trong hệ thống
       if (!users.hasOwnProperty(usernameToBonus)) {
         alert('Người dùng không tồn tại. Vui lòng kiểm tra lại tên người dùng.');
         return;
       }
 
-      // Kiểm tra giá trị bonus hợp lệ
       if (isNaN(bonus) || bonus <= 0) {
         alert('Vui lòng nhập số điểm hợp lệ.');
         return;
       }
 
-      // Cập nhật số điểm cho người dùng
+      // Lấy thông tin usage hiện tại
       const usage = JSON.parse(localStorage.getItem('usage') || '{}');
       if (!usage[usernameToBonus]) {
-        // Nếu người dùng chưa có trong usage, khởi tạo
         usage[usernameToBonus] = { date: new Date().toISOString().split('T')[0], count: 0 };
       }
 
       // Cộng điểm
       usage[usernameToBonus].count += bonus;
+
+      // Lưu lại usage
       localStorage.setItem('usage', JSON.stringify(usage));
 
-      // Cập nhật danh sách người dùng để hiển thị điểm mới
-      updateUserList();
+      updateUserList(); 
 
-      // Thông báo thành công
       alert(`Đã cộng ${bonus} điểm thành công cho người dùng ${usernameToBonus}.`);
     }
 
@@ -232,7 +226,7 @@
         throw new Error("Mã MD5 không hợp lệ. Vui lòng nhập chuỗi MD5 gồm 32 ký tự hexa.");
       }
 
-      let number = BigInt('0x' + md5Hash);
+      let number = BigInt('0x' + md5Hash); 
       let num1 = Number((number % 6n) + 1n);
       number = (number * 3n + 7n) % 10000000000n;
       let num2 = Number((number % 6n) + 1n);
@@ -278,7 +272,6 @@
         const result = generateRandomResult(md5.toLowerCase());
         resultDiv.innerText = '✅ Kết quả: ' + result;
 
-        // Xoá ô nhập MD5
         document.getElementById('md5Input').value = '';
 
         if (!isAdmin(user)) {
@@ -330,8 +323,8 @@
 
         document.getElementById('admin-panel').classList.toggle('hidden', !isAdmin(user));
         
-        updateUserList(); // Cập nhật danh sách người dùng
-        loadCurrentMapping(); // Tải giá trị mapping hiện tại cho admin
+        updateUserList(); 
+        loadCurrentMapping(); 
         updateHistory();
       } else {
         document.getElementById('login-form').classList.remove('hidden');
