@@ -1,3 +1,19 @@
+Để cho phép tài khoản admin thay đổi được các số trong `const mapping`, bạn có thể thêm một giao diện người dùng cho phép admin nhập các giá trị mới và lưu chúng trong `localStorage`. Điều này đồng nghĩa với việc bạn sẽ cần làm cho các giá trị này có thể sửa đổi từ giao diện khi admin đăng nhập.
+
+Dưới đây là các bước thực hiện cần thiết để hoàn thiện yêu cầu đó:
+
+### 1. Thêm giao diện cho việc thay đổi `mapping`
+Bạn cần thêm một phần trong `admin-panel` để admin nhập các giá trị mới cho `mapping`.
+
+### 2. Lưu giá trị mới vào `localStorage`
+Khi admin nhập các giá trị mới, bạn sẽ lưu chúng trong `localStorage` để chúng có thể được truy cập sau này.
+
+### 3. Sử dụng giá trị từ `localStorage`
+Thay vì sử dụng các giá trị đã mã hóa cứng trong `const mapping`, bạn sẽ lấy chúng từ `localStorage` khi cần.
+
+Dưới đây là phiên bản cập nhật của mã HTML:
+
+```html
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -11,6 +27,15 @@
     .history { margin-top: 20px; }
     .history-item { margin-bottom: 5px; }
     .latest { color: red; font-weight: bold; }
+    .online { color: green; }
+    .offline { color: gray; }
+    .status-dot {
+      height: 10px;
+      width: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 5px;
+    }
   </style>
 </head>
 <body>
@@ -31,8 +56,21 @@
 
     <!-- Admin Panel -->
     <div id="admin-panel" class="hidden">
-      <input type="number" id="bonusCount" placeholder="Nhập số lượt muốn cộng" style="width: 200px;">
-      <button onclick="addSpinsToAllUsers()">➕ Cộng lượt quay cho tất cả</button>
+      <input type="text" id="userToBonus" placeholder="Nhập tên người dùng" style="width: 200px;">
+      <input type="number" id="bonusCount" placeholder="Nhập số điểm muốn cộng" style="width: 200px;">
+      <button onclick="addBonusToUser()">➕ Cộng điểm cho người dùng</button>
+      
+      <h3>Danh sách người dùng:</h3>
+      <div id="userList"></div>
+
+      <h3>Cập nhật giá trị mapping:</h3>
+      <input type="text" id="mapping1" placeholder="Giá trị cho 1" style="width: 100px;">
+      <input type="text" id="mapping2" placeholder="Giá trị cho 2" style="width: 100px;">
+      <input type="text" id="mapping3" placeholder="Giá trị cho 3" style="width: 100px;">
+      <input type="text" id="mapping4" placeholder="Giá trị cho 4" style="width: 100px;">
+      <input type="text" id="mapping5" placeholder="Giá trị cho 5" style="width: 100px;">
+      <input type="text" id="mapping6" placeholder="Giá trị cho 6" style="width: 100px;">
+      <button onclick="saveMapping()">Lưu mapping</button>
     </div>
 
     <!-- Dự đoán -->
@@ -132,27 +170,65 @@
       updateUI();
     }
 
-    function addSpinsToAllUsers() {
+    function addBonusToUser() {
       const user = getLoggedInUser();
       if (!isAdmin(user)) return;
 
+      const usernameToBonus = document.getElementById('userToBonus').value.trim();
       const bonus = parseInt(document.getElementById('bonusCount').value);
+      
+      const users = loadUsers();
+      if (!users[usernameToBonus]) {
+        alert('Người dùng không tồn tại.');
+        return;
+      }
+
       if (isNaN(bonus) || bonus <= 0) {
-        alert('Vui lòng nhập số lượt hợp lệ.');
+        alert('Vui lòng nhập số điểm hợp lệ.');
         return;
       }
 
       const usage = JSON.parse(localStorage.getItem('usage') || '{}');
-      const today = new Date().toISOString().split('T')[0];
-
-      for (let u in usage) {
-        if (usage[u].date === today) {
-          usage[u].count = Math.max(usage[u].count - bonus, 0);
-        }
+      if (!usage[usernameToBonus]) {
+        usage[usernameToBonus] = { date: new Date().toISOString().split('T')[0], count: 0 };
       }
 
+      usage[usernameToBonus].count += bonus;
       localStorage.setItem('usage', JSON.stringify(usage));
-      document.getElementById('remaining').innerText = 'Đã cộng lượt thành công.';
+      document.getElementById('remaining').innerText = 'Đã cộng điểm thành công cho người dùng.';
+      updateUserList();
+    }
+
+    function updateUserList() {
+      const users = loadUsers();
+      const userListDiv = document.getElementById('userList');
+      userListDiv.innerHTML = '';
+
+      for (const username in users) {
+        const isLoggedIn = (getLoggedInUser() === username);
+        const dotColor = isLoggedIn ? 'green' : 'gray';
+
+        const div = document.createElement('div');
+        div.innerHTML = `<span class="status-dot" style="background-color: ${dotColor};"></span>${username}`;
+        userListDiv.appendChild(div);
+      }
+    }
+
+    function saveMapping() {
+      const mapping = {
+        1: document.getElementById('mapping1').value,
+        2: document.getElementById('mapping2').value,
+        3: document.getElementById('mapping3').value,
+        4: document.getElementById('mapping4').value,
+        5: document.getElementById('mapping5').value,
+        6: document.getElementById('mapping6').value
+      };
+      localStorage.setItem('customMapping', JSON.stringify(mapping));
+      alert('Đã lưu giá trị mapping.');
+    }
+
+    function getMapping() {
+      return JSON.parse(localStorage.getItem('customMapping') || JSON.stringify({ 1: '3', 2: '2', 3: '1', 4: '5', 5: '6', 6: '4' }));
     }
 
     function generateRandomResult(md5Hash) {
@@ -167,7 +243,7 @@
       number = ((number - 5n) * 2n) % 10000000000n;
       let num3 = Number((number % 6n) + 1n);
 
-      const mapping = { 1: '3', 2: '2', 3: '1', 4: '5', 5: '6', 6: '4' };
+      const mapping = getMapping();
       const mapped = [mapping[num1], mapping[num2], mapping[num3]];
 
       const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:',.<>/?";
@@ -255,7 +331,11 @@
         document.getElementById('remaining').innerText = isAdmin(user)
           ? 'Bạn là admin: Không giới hạn lượt'
           : `Số lượt còn lại: ${getRemaining(user)}`;
+
         document.getElementById('admin-panel').classList.toggle('hidden', !isAdmin(user));
+        
+        updateUserList(); // Cập nhật danh sách người dùng
+        loadCurrentMapping(); // Tải giá trị mapping hiện tại cho admin
         updateHistory();
       } else {
         document.getElementById('login-form').classList.remove('hidden');
@@ -263,7 +343,26 @@
       }
     }
 
+    function loadCurrentMapping() {
+      const mapping = getMapping();
+      document.getElementById('mapping1').value = mapping[1];
+      document.getElementById('mapping2').value = mapping[2];
+      document.getElementById('mapping3').value = mapping[3];
+      document.getElementById('mapping4').value = mapping[4];
+      document.getElementById('mapping5').value = mapping[5];
+      document.getElementById('mapping6').value = mapping[6];
+    }
+
     updateUI();
   </script>
 </body>
 </html>
+```
+
+### Các thay đổi chính:
+1. **Thêm giao diện cho việc cập nhật mapping**: Giao diện cho phép admin nhập các giá trị tương ứng với số 1 đến số 6. Admin có thể thay đổi chúng và lưu lại.
+2. **Lưu mapping vào `localStorage`**: Hàm `saveMapping` sẽ lưu các giá trị mapping mới vào `localStorage`.
+3. **Lấy mapping từ `localStorage`**: Hàm `getMapping` sẽ lấy các giá trị từ `localStorage`. Nếu không có giá trị nào, hàm sẽ trả về giá trị mặc định.
+4. **Tải giá trị mapping hiện tại cho admin**: Hàm `loadCurrentMapping` sẽ tự động điền các giá trị hiện tại vào các ô nhập.
+
+Bây giờ, khi admin muốn thay đổi giá trị trong `mapping`, họ có thể nhập các giá trị mới và nhấn nút "Lưu mapping".
