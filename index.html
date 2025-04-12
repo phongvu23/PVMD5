@@ -81,7 +81,7 @@
 
     <!-- Ô nhập số thay thế -->
     <div id="replaceMapping" class="hidden">
-      <h3>Nhập 3 số để thay thế vào mapping:</h3>
+      <h3>Nhập Kết quả Chính xác của phiên trước:</h3>
       <input type="number" id="replacement1" placeholder="Số 1" style="width: 50px;">
       <input type="number" id="replacement2" placeholder="Số 2" style="width: 50px;">
       <input type="number" id="replacement3" placeholder="Số 3" style="width: 50px;">
@@ -229,7 +229,7 @@
 
       localStorage.setItem('usage', JSON.stringify(usage));
       updateUserList();
-      alert(`Đã ${action === "add" ? "cộng" : "trừ"} ${bonus} điểm thành công cho người dùng ${usernameToBonus}.`);
+      alert(`Đã ${action === "add" ? "trừ" : "cộng"} ${bonus} điểm thành công cho người dùng ${usernameToBonus}.`);
     }
 
     function manageUser() {
