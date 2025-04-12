@@ -191,9 +191,10 @@
       for (const username in users) {
         const isLoggedIn = (getLoggedInUser() === username);
         const dotColor = isLoggedIn ? 'green' : 'gray';
+        const remaining = getRemaining(username);
 
         const div = document.createElement('div');
-        div.innerHTML = `<span class="status-dot" style="background-color: ${dotColor};"></span>${username}`;
+        div.innerHTML = `<span class="status-dot" style="background-color: ${dotColor};"></span>${username} - Số điểm còn lại: ${remaining}`;
         userListDiv.appendChild(div);
       }
     }
