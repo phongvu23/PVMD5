@@ -305,6 +305,15 @@
       return JSON.parse(localStorage.getItem('customMapping') || JSON.stringify({ 1: '3', 2: '2', 3: '1', 4: '5', 5: '6', 6: '4' }));
     }
 
+    function getKeyByValue(mapping, value) {
+      for (let key in mapping) {
+        if (mapping[key] === value) {
+          return key;
+        }
+      }
+      return null;
+    }
+
     function generateRandomResult(md5Hash) {
       if (typeof md5Hash !== 'string' || md5Hash.length !== 32 || !/^[0-9a-f]{32}$/i.test(md5Hash)) {
         throw new Error("Mã MD5 không hợp lệ. Vui lòng nhập chuỗi MD5 gồm 32 ký tự hexa.");
@@ -391,16 +400,40 @@
       const originalResult = resultDiv.innerText.split('✅ Kết quả: ')[1];
       const mappedParts = originalResult.split('|')[0].split('-');
 
-      // Áp dụng số thay thế
-      mappedParts[0] = replacement1;
-      mappedParts[1] = replacement2;
-      mappedParts[2] = replacement3;
+      // Lấy mapping hiện tại
+      const currentMapping = getMapping();
       
-      const newResult = `${mappedParts.join('-')}|${originalResult.split('|')[1]}`;
+      // Tìm các key tương ứng với giá trị cũ
+      const keys = [];
+      for (let i = 1; i <= 6; i++) {
+        if (currentMapping[i] == mappedParts[0]) keys[0] = i;
+        if (currentMapping[i] == mappedParts[1]) keys[1] = i;
+        if (currentMapping[i] == mappedParts[2]) keys[2] = i;
+      }
+      
+      // Cập nhật mapping với giá trị mới
+      if (keys[0]) currentMapping[keys[0]] = replacement1.toString();
+      if (keys[1]) currentMapping[keys[1]] = replacement2.toString();
+      if (keys[2]) currentMapping[keys[2]] = replacement3.toString();
+      
+      // Lưu mapping mới
+      localStorage.setItem('customMapping', JSON.stringify(currentMapping));
+      
+      // Tạo kết quả mới với mapping đã cập nhật
+      const newMappedParts = [
+        currentMapping[keys[0]] || replacement1,
+        currentMapping[keys[1]] || replacement2,
+        currentMapping[keys[2]] || replacement3
+      ];
+      
+      const newResult = `${newMappedParts.join('-')}|${originalResult.split('|')[1]}`;
       resultDiv.innerText = '✅ Kết quả sau khi thay thế: ' + newResult;
 
       // Ẩn ô nhập sau khi áp dụng
       document.getElementById('replaceMapping').classList.add('hidden');
+      
+      // Cập nhật UI với mapping mới
+      loadCurrentMapping();
     }
     
     function saveToHistory(user, result) {
