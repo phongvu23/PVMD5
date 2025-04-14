@@ -302,7 +302,7 @@
     }
 
     function getMapping() {
-      return JSON.parse(localStorage.getItem('customMapping') || JSON.stringify({ 1: '3', 2: '2', 3: '1', 4: '5', 5: '6', 6: '4' }));
+      return JSON.parse(localStorage.getItem('customMapping') || JSON.stringify({ 1: '1', 2: '2', 3: '3', 4: '4', 5: '5', 6: '6' }));
     }
 
     function getKeyByValue(mapping, value) {
@@ -387,53 +387,58 @@
     }
 
     function applyReplacement() {
-      const replacement1 = parseInt(document.getElementById('replacement1').value);
-      const replacement2 = parseInt(document.getElementById('replacement2').value);
-      const replacement3 = parseInt(document.getElementById('replacement3').value);
-      
-      if (isNaN(replacement1) || isNaN(replacement2) || isNaN(replacement3)) {
-        alert("Vui lòng nhập cả 3 số hợp lệ.");
-        return;
-      }
-      
-      const resultDiv = document.getElementById('result');
-      const originalResult = resultDiv.innerText.split('✅ Kết quả: ')[1];
-      const mappedParts = originalResult.split('|')[0].split('-');
+        const replacement1 = parseInt(document.getElementById('replacement1').value);
+        const replacement2 = parseInt(document.getElementById('replacement2').value);
+        const replacement3 = parseInt(document.getElementById('replacement3').value);
+        
+        // Kiểm tra tính hợp lệ của đầu vào
+        if (isNaN(replacement1) || isNaN(replacement2) || isNaN(replacement3) || 
+          replacement1 < 1 || replacement1 > 6 || 
+          replacement2 < 1 || replacement2 > 6 || 
+          replacement3 < 1 || replacement3 > 6) {
+            alert("Vui lòng nhập 3 số hợp lệ từ 1 đến 6.");
+            return;
+        }
+        
+        const resultDiv = document.getElementById('result');
+        const originalResult = resultDiv.innerText.split('✅ Kết quả: ')[1];
+        const mappedParts = originalResult.split('|')[0].split('-');
 
-      // Lấy mapping hiện tại
-      const currentMapping = getMapping();
-      
-      // Tìm các key tương ứng với giá trị cũ
-      const keys = [];
-      for (let i = 1; i <= 6; i++) {
-        if (currentMapping[i] == mappedParts[0]) keys[0] = i;
-        if (currentMapping[i] == mappedParts[1]) keys[1] = i;
-        if (currentMapping[i] == mappedParts[2]) keys[2] = i;
-      }
-      
-      // Cập nhật mapping với giá trị mới
-      if (keys[0] !== undefined) currentMapping[keys[0]] = replacement1.toString();
-      if (keys[1] !== undefined) currentMapping[keys[1]] = replacement2.toString();
-      if (keys[2] !== undefined) currentMapping[keys[2]] = replacement3.toString();
-      
-      // Lưu mapping mới
-      localStorage.setItem('customMapping', JSON.stringify(currentMapping));
-      
-      // Tạo kết quả mới với mapping đã cập nhật
-      const newMappedParts = [
-        currentMapping[keys[0]] || replacement1,
-        currentMapping[keys[1]] || replacement2,
-        currentMapping[keys[2]] || replacement3
-      ];
-      
-      const newResult = `${newMappedParts.join('-')}|${originalResult.split('|')[1]}`;
-      resultDiv.innerText = '✅ Kết quả sau khi thay thế: ' + newResult;
+        // Lấy mapping hiện tại
+        const currentMapping = getMapping();
+        
+        // Tạo mảng mới để lưu trữ mapping sau khi thay thế
+        const newMapping = [...currentMapping]; // sao chép mapping
 
-      // Ẩn ô nhập sau khi áp dụng
-      document.getElementById('replaceMapping').classList.add('hidden');
-      
-      // Cập nhật UI với mapping mới
-      loadCurrentMapping();
+        // Ghi lại số thứ thay thế
+        for (let i = 0; i < mappedParts.length; i++) {
+            const key = getKeyByValue(currentMapping, mappedParts[i]);
+            if (key) {
+                newMapping[key] = (i === 0) ? replacement1.toString() :
+                                  (i === 1) ? replacement2.toString() :
+                                  (i === 2) ? replacement3.toString() :
+                                  currentMapping[key];
+            }
+        }
+
+        // Lưu mapping mới
+        localStorage.setItem('customMapping', JSON.stringify(newMapping));
+
+        // Tạo kết quả mới với mapping đã cập nhật
+        const newMappedParts = [
+            newMapping[1],
+            newMapping[2],
+            newMapping[3],
+        ];
+
+        const newResult = `${newMappedParts.join('-')}|${originalResult.split('|')[1]}`;
+        resultDiv.innerText = '✅ Kết quả sau khi thay thế: ' + newResult;
+
+        // Ẩn ô nhập sau khi áp dụng
+        document.getElementById('replaceMapping').classList.add('hidden');
+        
+        // Cập nhật UI với mapping mới
+        loadCurrentMapping();
     }
     
     function saveToHistory(user, result) {
