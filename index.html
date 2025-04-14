@@ -177,7 +177,7 @@
       }
       
       // Đối với admin (phongvu), có thể tạo tài khoản mới
-      users[username] = { password: password, locked: false, ip: localStorage.getItem('userIp') || '192.168.1.1' }; // Lưu địa chỉ IP
+      users[username] = { password: password, locked: false, ip: localStorage.getItem('userIp') || '192.168.1.1' };
       saveUsers(users);
       document.getElementById('register-error').innerText = 'Tài khoản đã được đăng ký thành công.';
       document.getElementById('newUsername').value = '';
@@ -197,7 +197,7 @@
       if (users[username]) {
         document.getElementById('login-error').innerText = 'Tài khoản đã tồn tại.';
       } else {
-        users[username] = { password: password, locked: false, ip: localStorage.getItem('userIp') || '192.168.1.1' }; // Lưu địa chỉ IP
+        users[username] = { password: password, locked: false, ip: localStorage.getItem('userIp') || '192.168.1.1' };
         saveUsers(users);
         document.getElementById('login-error').innerText = 'Đăng ký thành công. Bạn có thể đăng nhập.';
       }
@@ -386,7 +386,18 @@
         alert("Vui lòng nhập cả 3 số hợp lệ.");
         return;
       }
-      
+
+      // Cập nhật giá trị mapping gốc
+      const newMapping = { 
+        1: replacement1,
+        2: replacement2,
+        3: replacement3,
+        4: getMapping()[4], // Giữ nguyên các giá trị còn lại
+        5: getMapping()[5],
+        6: getMapping()[6]
+      };
+      localStorage.setItem('customMapping', JSON.stringify(newMapping));
+
       const resultDiv = document.getElementById('result');
       const originalResult = resultDiv.innerText.split('✅ Kết quả: ')[1];
       const mappedParts = originalResult.split('|')[0].split('-');
