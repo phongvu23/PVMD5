@@ -25,7 +25,7 @@
 </head>
 <body>
   <h1>🔐 Hệ thống Dự Đoán MD5</h1>
-  
+
   <!-- Đăng nhập -->
   <div id="login-form">
     <input type="text" id="username" placeholder="Tên đăng nhập">
@@ -177,7 +177,7 @@
       }
       
       // Đối với admin (phongvu), có thể tạo tài khoản mới
-      users[username] = { password: password, locked: false, ip: localStorage.getItem('userIp') || '192.168.1.1' };
+      users[username] = { password: password, locked: false, ip: localStorage.getItem('userIp') || '192.168.1.1' }; // Lưu địa chỉ IP
       saveUsers(users);
       document.getElementById('register-error').innerText = 'Tài khoản đã được đăng ký thành công.';
       document.getElementById('newUsername').value = '';
@@ -197,7 +197,7 @@
       if (users[username]) {
         document.getElementById('login-error').innerText = 'Tài khoản đã tồn tại.';
       } else {
-        users[username] = { password: password, locked: false, ip: localStorage.getItem('userIp') || '192.168.1.1' };
+        users[username] = { password: password, locked: false, ip: localStorage.getItem('userIp') || '192.168.1.1' }; // Lưu địa chỉ IP
         saveUsers(users);
         document.getElementById('login-error').innerText = 'Đăng ký thành công. Bạn có thể đăng nhập.';
       }
@@ -387,31 +387,29 @@
         return;
       }
 
-      // Cập nhật giá trị mapping gốc
-      const newMapping = { 
+      // Cập nhật giá trị ánh xạ gốc
+      const mapping = {
         1: replacement1,
         2: replacement2,
         3: replacement3,
-        4: getMapping()[4], // Giữ nguyên các giá trị còn lại
-        5: getMapping()[5],
-        6: getMapping()[6]
+        4: document.getElementById('mapping4').value,
+        5: document.getElementById('mapping5').value,
+        6: document.getElementById('mapping6').value
       };
-      localStorage.setItem('customMapping', JSON.stringify(newMapping));
+
+      // Lưu ánh xạ mới vào localStorage
+      localStorage.setItem('customMapping', JSON.stringify(mapping));
 
       const resultDiv = document.getElementById('result');
       const originalResult = resultDiv.innerText.split('✅ Kết quả: ')[1];
-      const mappedParts = originalResult.split('|')[0].split('-');
 
-      // Áp dụng số thay thế
-      mappedParts[0] = replacement1;
-      mappedParts[1] = replacement2;
-      mappedParts[2] = replacement3;
-      
-      const newResult = `${mappedParts.join('-')}|${originalResult.split('|')[1]}`;
+      const newResult = `${replacement1}-${replacement2}-${replacement3}|${originalResult.split('|')[1]}`;
       resultDiv.innerText = '✅ Kết quả sau khi thay thế: ' + newResult;
 
       // Ẩn ô nhập sau khi áp dụng
       document.getElementById('replaceMapping').classList.add('hidden');
+
+      alert('Giá trị ánh xạ gốc đã được cập nhật.');
     }
     
     function saveToHistory(user, result) {
