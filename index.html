@@ -1,41 +1,60 @@
 function applyReplacement() {
-  const replacement1 = parseInt(document.getElementById('replacement1').value);
-  const replacement2 = parseInt(document.getElementById('replacement2').value);
-  const replacement3 = parseInt(document.getElementById('replacement3').value);
+  const replacement1 = document.getElementById('replacement1').value;
+  const replacement2 = document.getElementById('replacement2').value;
+  const replacement3 = document.getElementById('replacement3').value;
   
-  if (isNaN(replacement1) || isNaN(replacement2) || isNaN(replacement3)) {
-    alert("Vui lòng nhập cả 3 số hợp lệ.");
+  // Kiểm tra hợp lệ
+  if (!replacement1 || !replacement2 || !replacement3) {
+    alert("Vui lòng nhập đầy đủ 3 số");
     return;
   }
+
+  const num1 = parseInt(replacement1);
+  const num2 = parseInt(replacement2);
+  const num3 = parseInt(replacement3);
   
+  if (isNaN(num1) || isNaN(num2) || isNaN(num3)) {
+    alert("Vui lòng nhập số hợp lệ");
+    return;
+  }
+
   const resultDiv = document.getElementById('result');
-  const originalResult = resultDiv.innerText.split('✅ Kết quả: ')[1];
-  const [mappedPartsStr, randomStr] = originalResult.split('|');
-  const mappedParts = mappedPartsStr.split('-');
+  const resultText = resultDiv.innerText.replace('✅ Kết quả: ', '');
+  const [mappedPartsStr, randomStr] = resultText.split('|');
+  const oldValues = mappedPartsStr.split('-');
 
   // Lấy mapping hiện tại
   const currentMapping = getMapping();
-  
-  // Tạo mapping mới dựa trên giá trị thay thế
   const newMapping = {...currentMapping};
-  
-  // Tìm và cập nhật các key tương ứng với giá trị cũ
-  for (let i = 1; i <= 6; i++) {
-    if (newMapping[i] === mappedParts[0]) newMapping[i] = replacement1.toString();
-    if (newMapping[i] === mappedParts[1]) newMapping[i] = replacement2.toString();
-    if (newMapping[i] === mappedParts[2]) newMapping[i] = replacement3.toString();
+
+  // Tìm và cập nhật mapping
+  let updated = false;
+  for (const key in newMapping) {
+    if (newMapping[key] === oldValues[0]) {
+      newMapping[key] = num1.toString();
+      updated = true;
+    }
+    if (newMapping[key] === oldValues[1]) {
+      newMapping[key] = num2.toString();
+      updated = true;
+    }
+    if (newMapping[key] === oldValues[2]) {
+      newMapping[key] = num3.toString();
+      updated = true;
+    }
   }
-  
+
+  if (!updated) {
+    alert("Không tìm thấy giá trị cần thay thế trong mapping");
+    return;
+  }
+
   // Lưu mapping mới
   localStorage.setItem('customMapping', JSON.stringify(newMapping));
   
-  // Cập nhật UI với mapping mới
+  // Cập nhật UI
   loadCurrentMapping();
-  
-  // Ẩn ô nhập sau khi áp dụng
   document.getElementById('replaceMapping').classList.add('hidden');
-  
-  // Hiển thị thông báo thành công
   resultDiv.innerText = '✅ Đã cập nhật mapping thành công!';
   
   // Reset các ô nhập
