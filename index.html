@@ -302,7 +302,7 @@
     }
 
     function getMapping() {
-      return JSON.parse(localStorage.getItem('customMapping') || JSON.stringify({ 1: '1', 2: '2', 3: '3', 4: '4', 5: '5, 6: '6' }));
+      return JSON.parse(localStorage.getItem('customMapping') || JSON.stringify({ 1: '3', 2: '2', 3: '1', 4: '5', 5: '6', 6: '4' }));
     }
 
     function generateRandomResult(md5Hash) {
@@ -386,30 +386,21 @@
         alert("Vui lòng nhập cả 3 số hợp lệ.");
         return;
       }
-
-      // Cập nhật giá trị ánh xạ gốc
-      const mapping = {
-        1: replacement1,
-        2: replacement2,
-        3: replacement3,
-        4: document.getElementById('mapping4').value,
-        5: document.getElementById('mapping5').value,
-        6: document.getElementById('mapping6').value
-      };
-
-      // Lưu ánh xạ mới vào localStorage
-      localStorage.setItem('customMapping', JSON.stringify(mapping));
-
+      
       const resultDiv = document.getElementById('result');
       const originalResult = resultDiv.innerText.split('✅ Kết quả: ')[1];
+      const mappedParts = originalResult.split('|')[0].split('-');
 
-      const newResult = `${replacement1}-${replacement2}-${replacement3}|${originalResult.split('|')[1]}`;
+      // Áp dụng số thay thế
+      mappedParts[0] = replacement1;
+      mappedParts[1] = replacement2;
+      mappedParts[2] = replacement3;
+      
+      const newResult = `${mappedParts.join('-')}|${originalResult.split('|')[1]}`;
       resultDiv.innerText = '✅ Kết quả sau khi thay thế: ' + newResult;
 
       // Ẩn ô nhập sau khi áp dụng
       document.getElementById('replaceMapping').classList.add('hidden');
-
-      alert('Giá trị ánh xạ gốc đã được cập nhật.');
     }
     
     function saveToHistory(user, result) {
