@@ -387,67 +387,67 @@
     }
 
     function applyReplacement() {
-        // Lấy các giá trị số từ các ô nhập
-        const replacement1 = parseInt(document.getElementById('replacement1').value);
-        const replacement2 = parseInt(document.getElementById('replacement2').value);
-        const replacement3 = parseInt(document.getElementById('replacement3').value);
-        
-        // Kiểm tra tính hợp lệ của đầu vào
-        if (isNaN(replacement1) || isNaN(replacement2) || isNaN(replacement3) || 
-            replacement1 < 1 || replacement1 > 6 || 
-            replacement2 < 1 || replacement2 > 6 || 
-            replacement3 < 1 || replacement3 > 6) {
-            alert("Vui lòng nhập 3 số hợp lệ từ 1 đến 6.");
-            return;
-        }
-
-        const resultDiv = document.getElementById('result');
-        const originalResult = resultDiv.innerText.split('✅ Kết quả: ')[1];
-        const mappedParts = originalResult.split('|')[0].split('-');
-
-        // Lấy mapping hiện tại
-        const currentMapping = getMapping();
-        
-        // Tạo mảng mới để lưu trữ mapping sau khi thay thế
-        const newMapping = [...currentMapping]; // sao chép mapping
-
-        // Ghi lại số thứ thay thế
-        newMapping[mappedParts[0]] = replacement1.toString();
-        newMapping[mappedParts[1]] = replacement2.toString();
-        newMapping[mappedParts[2]] = replacement3.toString();
-
-        // Đảm bảo các giá trị từ 1-6 đều có mặt
-        const existingValues = Object.values(newMapping);
-        for (let i = 1; i <= 6; i++) {
-            if (!existingValues.includes(i.toString())) {
-                // Cố gắng giữ giá trị cũ cho tất cả các số từ 1 đến 6
-                for (let j = 1; j <= 6; j++) {
-                    if (!(j.toString() in newMapping)) {
-                        newMapping[j] = j.toString();
-                    }
-                }
-            }
-        }
-        
-        // Lưu mapping mới
-        localStorage.setItem('customMapping', JSON.stringify(newMapping));
-        
-        // Tạo kết quả mới với mapping đã cập nhật
-        const newMappedParts = [
-            newMapping[1],
-            newMapping[2],
-            newMapping[3],
-        ];
-
-        const newResult = `${newMappedParts.join('-')}|${originalResult.split('|')[1]}`;
-        resultDiv.innerText = '✅ Kết quả sau khi thay thế: ' + newResult;
-
-        // Ẩn ô nhập sau khi áp dụng
-        document.getElementById('replaceMapping').classList.add('hidden');
-        
-        // Cập nhật UI với mapping mới
-        loadCurrentMapping();
+    // Lấy các giá trị số từ các ô nhập
+    const replacement1 = parseInt(document.getElementById('replacement1').value);
+    const replacement2 = parseInt(document.getElementById('replacement2').value);
+    const replacement3 = parseInt(document.getElementById('replacement3').value);
+    
+    // Kiểm tra tính hợp lệ của đầu vào
+    if (isNaN(replacement1) || isNaN(replacement2) || isNaN(replacement3) || 
+        replacement1 < 1 || replacement1 > 6 || 
+        replacement2 < 1 || replacement2 > 6 || 
+        replacement3 < 1 || replacement3 > 6) {
+        alert("Vui lòng nhập 3 số hợp lệ từ 1 đến 6.");
+        return;
     }
+
+    const resultDiv = document.getElementById('result');
+    const originalResult = resultDiv.innerText.split('✅ Kết quả: ')[1];
+    
+    if (!originalResult) {
+        alert("Chưa có kết quả nào để thay thế.");
+        return;
+    }
+    
+    const mappedParts = originalResult.split('|')[0].split('-');
+
+    // Lấy mapping hiện tại
+    const currentMapping = getMapping();
+
+    // Tạo một bản sao của mapping hiện tại
+    const newMapping = [null, ...currentMapping]; // Bảo đảm rằng chỉ số bắt đầu từ 1
+
+    // Cập nhật các giá trị đã nhập vào mapping
+    newMapping[mappedParts[0]] = replacement1.toString();
+    newMapping[mappedParts[1]] = replacement2.toString();
+    newMapping[mappedParts[2]] = replacement3.toString();
+    
+    // Đảm bảo các số từ 1 đến 6 đã có mặt
+    for (let i = 1; i <= 6; i++) {
+        if (!newMapping[i]) {
+            newMapping[i] = i.toString(); // Gán giá trị mặc định nếu không có
+        }
+    }
+
+    // Lưu mapping mới vào localStorage
+    localStorage.setItem('customMapping', JSON.stringify(newMapping));
+
+    // Cập nhật kết quả hiển thị với mapping mới
+    const newMappedParts = [
+        newMapping[1],
+        newMapping[2],
+        newMapping[3],
+    ];
+
+    const newResult = `${newMappedParts.join('-')}|${originalResult.split('|')[1]}`;
+    resultDiv.innerText = '✅ Kết quả sau khi thay thế: ' + newResult;
+
+    // Ẩn ô nhập sau khi áp dụng
+    document.getElementById('replaceMapping').classList.add('hidden');
+
+    // Cập nhật lại giá trị mapping trên UI
+    loadCurrentMapping();
+}
     
     function saveToHistory(user, result) {
       let history = JSON.parse(localStorage.getItem('history_' + user) || '[]');
