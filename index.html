@@ -423,54 +423,51 @@
       });
     }
 
+    <!-- Thêm đoạn cuối bị thiếu vào cuối script -->
     function clearHistory() {
       const user = getLoggedInUser();
-      if (!user) {
-        alert('Bạn phải đăng nhập để xóa lịch sử.');
-        return;
-      }
-
-      // Xóa lịch sử
       localStorage.removeItem('history_' + user);
-      updateHistory(); // Cập nhật lại giao diện sau khi xóa
-      alert('Đã xóa lịch sử kết quả gần nhất.');
+      updateHistory();
     }
 
     function updateUI() {
       const user = getLoggedInUser();
-      if (user) {
-        document.getElementById('login-form').classList.add('hidden');
-        document.getElementById('main-app').classList.remove('hidden');
+      const isUserLoggedIn = !!user;
+      document.getElementById('login-form').classList.toggle('hidden', isUserLoggedIn);
+      document.getElementById('main-app').classList.toggle('hidden', !isUserLoggedIn);
+
+      if (isUserLoggedIn) {
         document.getElementById('current-user').innerText = user;
+
+        // Hiển thị admin panel nếu là admin
+        document.getElementById('admin-panel').classList.toggle('hidden', !isAdmin(user));
+        if (isAdmin(user)) {
+          updateUserList();
+        }
+
         document.getElementById('remaining').innerText = isAdmin(user)
           ? 'Bạn là admin: Không giới hạn lượt'
           : `Số lượt còn lại: ${getRemaining(user)}`;
-
-        document.getElementById('admin-panel').classList.toggle('hidden', !isAdmin(user));
-        
-        // Hiển thị mục đăng ký tài khoản khi là admin
-        document.getElementById('register-user').classList.toggle('hidden', !isAdmin(user));
-        
-        updateUserList(); 
-        loadCurrentMapping(); 
         updateHistory();
       } else {
-        document.getElementById('login-form').classList.remove('hidden');
-        document.getElementById('main-app').classList.add('hidden');
+        document.getElementById('current-user').innerText = '';
+        document.getElementById('result').innerText = '';
+        document.getElementById('error').innerText = '';
+        document.getElementById('remaining').innerText = '';
+        document.getElementById('history-list').innerHTML = '';
+        document.getElementById('replaceMapping').classList.add('hidden');
       }
     }
 
-    function loadCurrentMapping() {
-      const mapping = getMapping();
-      document.getElementById('mapping1').value = mapping[1];
-      document.getElementById('mapping2').value = mapping[2];
-      document.getElementById('mapping3').value = mapping[3];
-      document.getElementById('mapping4').value = mapping[4];
-      document.getElementById('mapping5').value = mapping[5];
-      document.getElementById('mapping6').value = mapping[6];
-    }
+    // Lấy IP từ bên ngoài (nếu cần)
+    fetch('https://api.ipify.org?format=json')
+      .then(res => res.json())
+      .then(data => {
+        localStorage.setItem('userIp', data.ip);
+      });
 
     updateUI();
   </script>
 </body>
 </html>
+
