@@ -7,7 +7,7 @@
     body { font-family: Arial, sans-serif; padding: 30px; background: #f2f2f2; }
     input, button, select { padding: 10px; margin: 5px; font-size: 16px; }
     .hidden { display: none; }
-    #result, #error, #remaining { margin-top: 10px; font-weight: bold; }
+    #result, #error { margin-top: 10px; font-weight: bold; }
     .history { margin-top: 20px; }
     .history-item { margin-bottom: 5px; }
     .latest { color: red; font-weight: bold; }
@@ -23,7 +23,6 @@
     <input type="text" id="md5Input" placeholder="Nhập mã MD5 (32 ký tự)" size="40">
     <button onclick="handleGenerate()">Tạo kết quả</button>
 
-    <div id="remaining"></div>
     <div id="result" style="color: green;"></div>
     <div id="error" style="color: red;"></div>
 
@@ -42,7 +41,7 @@
       <button onclick="clearHistory()">🗑️ Xóa Lịch Sử</button>
       <div id="history-list"></div>
     </div>
-    
+
     <h3>Cập nhật giá trị mapping:</h3>
     <input type="text" id="mapping1" placeholder="Giá trị cho 1" style="width: 100px;">
     <input type="text" id="mapping2" placeholder="Giá trị cho 2" style="width: 100px;">
@@ -55,9 +54,6 @@
   </div>
 
   <script>
-    // Số lượt tối đa có thể sử dụng
-    const MAX_GUESSES = 10;
-
     function saveMapping() {
       const mapping = {
         1: document.getElementById('mapping1').value,
@@ -103,19 +99,8 @@
       const md5 = document.getElementById('md5Input').value.trim();
       const resultDiv = document.getElementById('result');
       const errorDiv = document.getElementById('error');
-      const remainingDiv = document.getElementById('remaining');
       resultDiv.innerText = '';
       errorDiv.innerText = '';
-
-      const usage = JSON.parse(localStorage.getItem('usage') || '{}');
-      const user = 'guest';
-      const used = usage[user]?.count || 0;
-      const remaining = MAX_GUESSES - used;
-
-      if (remaining <= 0) {
-        errorDiv.innerText = 'Bạn không có lượt nào. Vui lòng yêu cầu admin cộng điểm.';
-        return;
-      }
 
       try {
         const { result, original } = generateRandomResult(md5.toLowerCase());
@@ -124,17 +109,8 @@
         // Hiện ô nhập số thay thế
         document.getElementById('replaceMapping').classList.remove('hidden');
 
-        // Cập nhật số lượt sử dụng
-        if (!usage[user]) {
-          usage[user] = { count: 0 };
-        }
-        usage[user].count += 1; 
-        localStorage.setItem('usage', JSON.stringify(usage));
-
-        saveToHistory(user, result);
+        saveToHistory('guest', result);
         updateHistory();
-        
-        remainingDiv.innerText = `Số lượt còn lại: ${MAX_GUESSES - usage[user].count}`;
       } catch (e) {
         errorDiv.innerText = '❌ Lỗi: ' + e.message;
       }
@@ -167,7 +143,7 @@
       mapping[1] = replacement1;
       mapping[2] = replacement2;
       mapping[3] = replacement3;
-      localStorage.setItem('customMapping', JSON.stringify(mapping)); // Lưu lại mapping đã cập nhật
+      localStorage.setItem('customMapping', JSON.stringify(mapping));
 
       // Ẩn ô nhập sau khi áp dụng
       document.getElementById('replaceMapping').classList.add('hidden');
