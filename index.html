@@ -6,7 +6,6 @@
   <style>
     body { font-family: Arial, sans-serif; padding: 30px; background: #f2f2f2; }
     input, button { padding: 10px; margin: 5px; font-size: 16px; }
-    .hidden { display: none; }
     #result, #error { margin-top: 10px; font-weight: bold; }
     .history { margin-top: 20px; }
     .history-item { margin-bottom: 5px; }
@@ -17,13 +16,20 @@
   <h1>🔐 Hệ thống Dự Đoán MD5</h1>
 
   <div id="main-app">
-
     <h3>Dự đoán MD5:</h3>
     <input type="text" id="md5Input" placeholder="Nhập mã MD5 (32 ký tự)" size="40">
     <button onclick="handleGenerate()">Tạo kết quả</button>
 
     <div id="result" style="color: green;"></div>
     <div id="error" style="color: red;"></div>
+
+    <div id="replaceMapping" class="hidden">
+      <h3>Nhập 3 số để thay thế vào mapping:</h3>
+      <input type="number" id="replacement1" placeholder="Số 1" style="width: 50px;">
+      <input type="number" id="replacement2" placeholder="Số 2" style="width: 50px;">
+      <input type="number" id="replacement3" placeholder="Số 3" style="width: 50px;">
+      <button onclick="applyReplacement()">Áp dụng thay thế</button>
+    </div>
 
     <!-- Lịch sử -->
     <div class="history">
@@ -57,7 +63,7 @@
         throw new Error("Mã MD5 không hợp lệ. Vui lòng nhập chuỗi MD5 gồm 32 ký tự hexa.");
       }
 
-      let number = BigInt('0x' + md5Hash); 
+      let number = BigInt('0x' + md5Hash);
       let num1 = Number((number % 6n) + 1n);
       number = (number * 3n + 7n) % 10000000000n;
       let num2 = Number((number % 6n) + 1n);
@@ -67,17 +73,7 @@
       const mapping = getMapping();
       const mapped = [mapping[num1], mapping[num2], mapping[num3]];
 
-      const randomStr = generateRandomString(30);
-      return { result: `${mapped.join('-')}|${randomStr}`, mapped };
-    }
-
-    function generateRandomString(length) {
-      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:',.<>/?";
-      let result = "";
-      for (let i = 0; i < length; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      return result;
+      return { result: mapped }; // Chỉ trả về ba số ánh xạ
     }
 
     function handleGenerate() {
@@ -89,13 +85,13 @@
 
       try {
         const { result } = generateRandomResult(md5.toLowerCase());
-        resultDiv.innerText = '✅ Kết quả: ' + result;
+        resultDiv.innerText = '✅ Kết quả: ' + result.join(', '); // Hiển thị ba số được ánh xạ
 
-        // Hiện ô nhập cho mapping
+        // Hiển thị ô nhập cho mapping
         buildMappingInputs();
 
         // Lưu vào lịch sử
-        saveToHistory('guest', result);
+        saveToHistory('guest', result.join(', '));
         updateHistory();
       } catch (e) {
         errorDiv.innerText = '❌ Lỗi: ' + e.message;
@@ -115,6 +111,31 @@
         input.value = mapping[i];
         container.appendChild(input);
       }
+    }
+
+    function applyReplacement() {
+      const replacement1 = parseInt(document.getElementById('replacement1').value);
+      const replacement2 = parseInt(document.getElementById('replacement2').value);
+      const replacement3 = parseInt(document.getElementById('replacement3').value);
+      
+      const resultDiv = document.getElementById('result');
+      const originalResult = resultDiv.innerText.split('✅ Kết quả: ')[1].split(', ');
+
+      // Áp dụng số thay thế
+      if (!isNaN(replacement1)) originalResult[0] = replacement1;
+      if (!isNaN(replacement2)) originalResult[1] = replacement2;
+      if (!isNaN(replacement3)) originalResult[2] = replacement3;
+
+      const newResult = `${originalResult.join(', ')}`;
+      resultDiv.innerText = '✅ Kết quả sau khi thay thế: ' + newResult;
+
+      // Cập nhật giá trị mapping gốc
+      const mapping = getMapping();
+      mapping[1] = replacement1;
+      mapping[2] = replacement2;
+      mapping[3] = replacement3;
+      localStorage.setItem('customMapping', JSON.stringify(mapping));
+      buildMappingInputs(); // Cập nhật ô input với giá trị mới
     }
 
     function saveToHistory(user, result) {
