@@ -1,186 +1,232 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <title>MD5 Dự Đoán</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 30px; background: #f2f2f2; }
-    input, button { padding: 10px; margin: 5px; font-size: 16px; }
-    #result, #error { margin-top: 10px; font-weight: bold; }
-    .history { margin-top: 20px; }
-    .history-item { margin-bottom: 5px; }
-    .latest { color: red; font-weight: bold; }
-    .mapping-input { width: 50px; }
-  </style>
+    <meta charset="UTF-8">
+    <title>MD5 Dự Đoán</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 30px; background: #f2f2f2; }
+        input, button { padding: 10px; margin: 5px; font-size: 16px; }
+        #result, #error { margin-top: 10px; font-weight: bold; }
+        .history { margin-top: 20px; }
+        .history-item { margin-bottom: 5px; }
+        .latest { color: red; font-weight: bold; }
+        .mapping-container { display: flex; flex-direction: column; }
+        .mapping-item { display: flex; align-items: center; margin: 5px 0; cursor: grab; }
+        .mapping-input { width: 50px; margin-right: 10px; }
+    </style>
 </head>
 <body>
-  <h1>🔐 Hệ thống Dự Đoán MD5</h1>
+    <h1>🔐 Hệ thống Dự Đoán MD5</h1>
 
-  <div id="main-app">
-    <h3>Dự đoán MD5:</h3>
-    <input type="text" id="md5Input" placeholder="Nhập mã MD5 (32 ký tự)" size="40">
-    <button onclick="handleGenerate()">Tạo kết quả</button>
+    <div id="main-app">
+        <h3>Dự đoán MD5:</h3>
+        <input type="text" id="md5Input" placeholder="Nhập mã MD5 (32 ký tự)" size="40">
+        <button onclick="handleGenerate()">Tạo kết quả</button>
 
-    <div id="result" style="color: green;"></div>
-    <div id="error" style="color: red;"></div>
+        <div id="result" style="color: green;"></div>
+        <div id="error" style="color: red;"></div>
 
-    <div id="replaceMapping" style="display:none;">
-      <h3>Nhập 3 số để thay thế vào mapping (0-6):</h3>
-      <input type="number" id="replacement1" placeholder="Số 1 (0-6)">
-      <input type="number" id="replacement2" placeholder="Số 2 (0-6)">
-      <input type="number" id="replacement3" placeholder="Số 3 (0-6)">
-      <button onclick="applyReplacement()">Áp dụng thay thế</button>
+        <div id="replaceMapping" style="display:none;">
+            <h3>Nhập 3 số để thay thế vào mapping:</h3>
+            <input type="number" id="replacement1" placeholder="Số 1 (1-6)">
+            <input type="number" id="replacement2" placeholder="Số 2 (1-6)">
+            <input type="number" id="replacement3" placeholder="Số 3 (1-6)">
+            <button onclick="applyReplacement()">Áp dụng thay thế</button>
+        </div>
+
+        <div id="mapping-container" class="mapping-container"></div>
+        <button onclick="saveMapping()">Lưu giá trị ánh xạ</button>
+        <button onclick="resetMapping()">Đặt lại giá trị mặc định</button>
+
+        <!-- Lịch sử -->
+        <div class="history">
+            <h3>Lịch sử kết quả gần nhất:</h3>
+            <button onclick="clearHistory()">🗑️ Xóa Lịch Sử</button>
+            <div id="history-list"></div>
+        </div>
     </div>
 
-    <div id="mapping-container"></div>
+    <script>
+        let dragSrcEl = null;
 
-    <!-- Lịch sử -->
-    <div class="history">
-      <h3>Lịch sử kết quả gần nhất:</h3>
-      <button onclick="clearHistory()">🗑️ Xóa Lịch Sử</button>
-      <div id="history-list"></div>
-    </div>
-  </div>
-
-  <script>
-    function saveMapping() {
-      const mappings = {};
-      const inputs = document.querySelectorAll('.mapping-input');
-      inputs.forEach((input, index) => {
-        mappings[index + 1] = input.value;
-      });
-      localStorage.setItem('customMapping', JSON.stringify(mappings));
-      alert('Đã lưu giá trị mapping.');
-    }
-
-    function getMapping() {
-      return JSON.parse(localStorage.getItem('customMapping') || JSON.stringify({ 1: '1', 2: '2', 3: '3', 4: '4', 5: '5', 6: '6' }));
-    }
-
-    function generateRandomResult(md5Hash) {
-      if (typeof md5Hash !== 'string' || md5Hash.length !== 32 || !/^[0-9a-f]{32}$/i.test(md5Hash)) {
-        throw new Error("Mã MD5 không hợp lệ. Vui lòng nhập chuỗi MD5 gồm 32 ký tự hexa.");
-      }
-
-      let number = BigInt('0x' + md5Hash);
-      let result = [];
-      for (let i = 0; i < 6; i++) {
-        number = (number * 3n + 7n) % 10000000000n;
-        result.push(Number((number % 6n) + 1n));
-      }
-
-      const mapping = getMapping();
-      const mapped = result.map(num => mapping[num]);
-
-      return { result, mapped }; // Trả về cả kết quả số gốc và số đã ánh xạ
-    }
-
-    function handleGenerate() {
-      const md5 = document.getElementById('md5Input').value.trim();
-      const resultDiv = document.getElementById('result');
-      const errorDiv = document.getElementById('error');
-      resultDiv.innerText = '';
-      errorDiv.innerText = '';
-      document.getElementById('replaceMapping').style.display = 'none'; // Ẩn ô nhập thay thế trước đó
-
-      try {
-        const { mapped } = generateRandomResult(md5.toLowerCase());
-
-        // Chỉ hiển thị 3 số đã ánh xạ
-        const displayedResult = mapped.slice(0, 3);
-        resultDiv.innerText = '✅ Kết quả ánh xạ: ' + displayedResult.join(', '); // Hiển thị chỉ 3 số được ánh xạ
-        
-        buildMappingInputs(mapped); // Xây dựng ô nhập cho ánh xạ mới
-        localStorage.setItem('lastMapping', JSON.stringify(mapped)); // Lưu ánh xạ lại
-        saveToHistory('guest', displayedResult.join(', '));
-        updateHistory();
-        document.getElementById('replaceMapping').style.display = 'block'; // Hiện ô nhập số thay thế
-      } catch (e) {
-        errorDiv.innerText = '❌ Lỗi: ' + e.message;
-      }
-    }
-
-    function buildMappingInputs(lastMapping) {
-      const container = document.getElementById('mapping-container');
-      container.innerHTML = '';
-      const mapping = getMapping();
-
-      for (let i = 1; i <= 6; i++) {
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.className = 'mapping-input';
-        input.placeholder = `Giá trị ${i}`;
-        input.value = mapping[i];
-
-        // Ghi chú số ánh xạ
-        const label = document.createElement('label');
-        label.textContent = `Ánh xạ ${i}: ${lastMapping[i - 1]}`;
-        container.appendChild(label);
-        
-        container.appendChild(input);
-      }
-    }
-
-    function applyReplacement() {
-      const lastMapping = JSON.parse(localStorage.getItem('lastMapping'));
-      const mapping = getMapping();
-      
-      if (lastMapping) {
-        const replacements = [
-          parseInt(document.getElementById('replacement1').value),
-          parseInt(document.getElementById('replacement2').value),
-          parseInt(document.getElementById('replacement3').value),
-        ];
-
-        // Áp dụng số thay thế cho 3 vị trí dựa trên kết quả ánh xạ
-        for (let i = 0; i < 3; i++) {
-          const position = lastMapping[i] - 1; // Lấy chỉ số vị trí ánh xạ
-          if (position >= 0 && position < 6) {
-            mapping[lastMapping[i]] = replacements[i]; // Thay thế vị trí ánh xạ tương ứng
-          }
+        function saveMapping() {
+            const mappings = {};
+            const inputs = document.querySelectorAll('.mapping-input');
+            inputs.forEach((input, index) => {
+                mappings[index + 1] = input.value;
+            });
+            localStorage.setItem('customMapping', JSON.stringify(mappings));
+            alert('Đã lưu giá trị ánh xạ.');
         }
 
-        localStorage.setItem('customMapping', JSON.stringify(mapping));
-        buildMappingInputs(lastMapping); // Cập nhật lại ô input
-        alert('Đã cập nhật giá trị mapping.');
-      }
-    }
+        function getMapping() {
+            return JSON.parse(localStorage.getItem('customMapping') || JSON.stringify({
+                1: '1', 2: '2', 3: '3', 4: '4', 5: '5', 6: '6'
+            }));
+        }
 
-    function saveToHistory(user, result) {
-      let history = JSON.parse(localStorage.getItem('history_' + user) || '[]');
-      history.unshift(result);
-      if (history.length > 10) history = history.slice(0, 10);
-      localStorage.setItem('history_' + user, JSON.stringify(history));
-    }
+        function resetMapping() {
+            localStorage.removeItem('customMapping');
+            alert('Đã đặt lại giá trị ánh xạ về mặc định.');
+            loadCurrentMapping();
+        }
 
-    function updateHistory() {
-      const user = 'guest';
-      const container = document.getElementById('history-list');
-      const history = JSON.parse(localStorage.getItem('history_' + user) || '[]');
-      container.innerHTML = '';
-      history.forEach((item, index) => {
-        const div = document.createElement('div');
-        div.className = 'history-item' + (index === 0 ? ' latest' : '');
-        div.textContent = `${index + 1}. ${item}`;
-        container.appendChild(div);
-      });
-    }
+        function generateRandomResult(md5Hash) {
+            if (typeof md5Hash !== 'string' || md5Hash.length !== 32 || !/^[0-9a-f]{32}$/i.test(md5Hash)) {
+                throw new Error("Mã MD5 không hợp lệ. Vui lòng nhập chuỗi MD5 gồm 32 ký tự hexa.");
+            }
 
-    function clearHistory() {
-      const user = 'guest';
-      localStorage.removeItem('history_' + user);
-      updateHistory();
-      alert('Đã xóa lịch sử kết quả gần nhất.');
-    }
+            let number = BigInt('0x' + md5Hash);
+            let result = [];
+            for (let i = 0; i < 6; i++) {
+                number = (number * 3n + 7n) % 10000000000n;
+                result.push(Number((number % 6n) + 1n));
+            }
 
-    // Tải giá trị mapping hiện tại
-    function loadCurrentMapping() {
-      const mapping = getMapping();
-      buildMappingInputs(); // Tải giá trị mapping vào ô input
-    }
+            const mapping = getMapping();
+            const mapped = result.map(num => mapping[num]); // Ánh xạ theo mặc định
 
-    loadCurrentMapping(); // Tải giá trị mapping hiện tại
-    updateHistory(); // Cập nhật lịch sử ban đầu
-  </script>
+            return { result, mapped }; // Trả về cả kết quả số gốc và số đã ánh xạ
+        }
+
+        function handleGenerate() {
+            const md5 = document.getElementById('md5Input').value.trim();
+            const resultDiv = document.getElementById('result');
+            const errorDiv = document.getElementById('error');
+            resultDiv.innerText = '';
+            errorDiv.innerText = '';
+            document.getElementById('replaceMapping').style.display = 'none'; // Ẩn ô nhập thay thế trước đó
+
+            try {
+                const { mapped } = generateRandomResult(md5.toLowerCase());
+
+                // Chỉ hiển thị 3 số đã ánh xạ
+                const displayedResult = mapped.slice(0, 3);
+                resultDiv.innerText = '✅ Kết quả ánh xạ: ' + displayedResult.join(', '); // Hiển thị chỉ 3 số được ánh xạ
+                
+                buildMappingInputs(mapped); // Xây dựng ô nhập cho ánh xạ mới
+                localStorage.setItem('lastMapping', JSON.stringify(mapped)); // Lưu ánh xạ lại
+                saveToHistory('guest', displayedResult.join(', '));
+                updateHistory();
+                document.getElementById('replaceMapping').style.display = 'block'; // Hiện ô nhập số thay thế
+            } catch (e) {
+                errorDiv.innerText = '❌ Lỗi: ' + e.message;
+            }
+        }
+
+        function buildMappingInputs(lastMapping) {
+            const container = document.getElementById('mapping-container');
+            container.innerHTML = '';
+            const mapping = getMapping();
+
+            for (let i = 1; i <= 6; i++) {
+                const mappingItem = document.createElement('div');
+                mappingItem.className = 'mapping-item';
+                mappingItem.setAttribute('draggable', 'true');
+                mappingItem.addEventListener('dragstart', handleDragStart);
+                mappingItem.addEventListener('dragover', handleDragOver);
+                mappingItem.addEventListener('drop', handleDrop);
+
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'mapping-input';
+                input.placeholder = `Giá trị ${i}`;
+                input.value = mapping[i];
+
+                const label = document.createElement('label');
+                label.textContent = `Ánh xạ ${i}: ${lastMapping[i - 1]}`;
+
+                mappingItem.appendChild(input);
+                mappingItem.appendChild(label);
+                container.appendChild(mappingItem);
+            }
+        }
+
+        function handleDragStart(e) {
+            dragSrcEl = this;
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        }
+
+        function handleDrop(e) {
+            e.stopPropagation();
+            if (dragSrcEl !== this) {
+                const srcInput = dragSrcEl.querySelector('.mapping-input').value;
+                const destInput = this.querySelector('.mapping-input').value;
+
+                dragSrcEl.querySelector('.mapping-input').value = destInput;
+                this.querySelector('.mapping-input').value = srcInput;
+
+                // Cập nhật ánh xạ mới
+                saveMapping();
+            }
+            return false;
+        }
+
+        function applyReplacement() {
+            const lastMapping = JSON.parse(localStorage.getItem('lastMapping'));
+            const mapping = getMapping();
+            
+            if (lastMapping) {
+                const replacements = [
+                    parseInt(document.getElementById('replacement1').value),
+                    parseInt(document.getElementById('replacement2').value),
+                    parseInt(document.getElementById('replacement3').value),
+                ];
+
+                // Áp dụng số thay thế cho 3 vị trí dựa trên kết quả ánh xạ
+                for (let i = 0; i < 3; i++) {
+                    const position = lastMapping[i] - 1; // Lấy chỉ số vị trí ánh xạ
+                    if (position >= 0 && position < 6) {
+                        mapping[lastMapping[i]] = replacements[i]; // Thay thế vị trí ánh xạ tương ứng
+                    }
+                }
+
+                localStorage.setItem('customMapping', JSON.stringify(mapping));
+                buildMappingInputs(lastMapping); // Cập nhật lại ô input
+                alert('Đã cập nhật giá trị ánh xạ.');
+            }
+        }
+
+        function saveToHistory(user, result) {
+            let history = JSON.parse(localStorage.getItem('history_' + user) || '[]');
+            history.unshift(result);
+            if (history.length > 10) history = history.slice(0, 10);
+            localStorage.setItem('history_' + user, JSON.stringify(history));
+        }
+
+        function updateHistory() {
+            const user = 'guest';
+            const container = document.getElementById('history-list');
+            const history = JSON.parse(localStorage.getItem('history_' + user) || '[]');
+            container.innerHTML = '';
+            history.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'history-item' + (index === 0 ? ' latest' : '');
+                div.textContent = `${index + 1}. ${item}`;
+                container.appendChild(div);
+            });
+        }
+
+        function clearHistory() {
+            const user = 'guest';
+            localStorage.removeItem('history_' + user);
+            updateHistory();
+            alert('Đã xóa lịch sử kết quả gần nhất.');
+        }
+
+        // Tải giá trị mapping hiện tại
+        function loadCurrentMapping() {
+            const mapping = getMapping();
+            buildMappingInputs(); // Tải giá trị mapping vào ô input
+        }
+
+        loadCurrentMapping(); // Tải giá trị mapping hiện tại
+        updateHistory(); // Cập nhật lịch sử ban đầu
+    </script>
 </body>
 </html>
