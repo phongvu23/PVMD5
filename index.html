@@ -26,60 +26,41 @@
 <body>
   <h1>🔐 Hệ thống Dự Đoán MD5</h1>
 
-  <!-- Đăng nhập -->
-  <div id="login-form">
-    <input type="text" id="username" placeholder="Tên đăng nhập">
-    <input type="password" id="password" placeholder="Mật khẩu">
-    <button onclick="handleLogin()">Đăng nhập</button>
-    <button onclick="handleRegister()">Đăng ký</button>
-    <div id="login-error" style="color: red;"></div>
-  </div>
-
   <!-- Giao diện chính -->
-  <div id="main-app" class="hidden">
-    <p>👋 Xin chào, <b id="current-user"></b> <button onclick="handleLogout()">Đăng xuất</button></p>
+  <div id="main-app">
+    <h2>Quản lý người dùng (Admin):</h2>
+    
+    <h3>Quản lý người dùng:</h3>
+    <input type="text" id="userToBonus" placeholder="Nhập tên người dùng" style="width: 200px;">
+    <input type="number" id="bonusCount" placeholder="Nhập số điểm" style="width: 200px;">
+    <select id="bonusAction">
+      <option value="add">- điểm</option>
+      <option value="subtract">+ điểm</option>
+    </select>
+    <button onclick="addBonusToUser()">✅ Xác nhận</button>
+    
+    <h3>Khóa hoặc xóa người dùng:</h3>
+    <input type="text" id="userToManage" placeholder="Nhập tên người dùng" style="width: 200px;">
+    <select id="manageAction">
+      <option value="lock">Khóa người dùng</option>
+      <option value="delete">Xóa người dùng</option>
+    </select>
+    <button onclick="manageUser()">✅ Thực hiện</button>
 
-    <!-- Admin Panel -->
-    <div id="admin-panel" class="hidden">
-      <h3>Quản lý người dùng:</h3>
-      <input type="text" id="userToBonus" placeholder="Nhập tên người dùng" style="width: 200px;">
-      <input type="number" id="bonusCount" placeholder="Nhập số điểm" style="width: 200px;">
-      <select id="bonusAction">
-        <option value="add">- điểm</option>
-        <option value="subtract">+ điểm</option>
-      </select>
-      <button onclick="addBonusToUser()">✅ Xác nhận</button>
-      
-      <h3>Khóa hoặc xóa người dùng:</h3>
-      <input type="text" id="userToManage" placeholder="Nhập tên người dùng" style="width: 200px;">
-      <select id="manageAction">
-        <option value="lock">Khóa người dùng</option>
-        <option value="delete">Xóa người dùng</option>
-      </select>
-      <button onclick="manageUser()">✅ Thực hiện</button>
+    <h3>Danh sách người dùng:</h3>
+    <div id="userList"></div>
 
-      <h3>Danh sách người dùng:</h3>
-      <div id="userList"></div>
-
-      <h3>Cập nhật giá trị mapping:</h3>
-      <input type="text" id="mapping1" placeholder="Giá trị cho 1" style="width: 100px;">
-      <input type="text" id="mapping2" placeholder="Giá trị cho 2" style="width: 100px;">
-      <input type="text" id="mapping3" placeholder="Giá trị cho 3" style="width: 100px;">
-      <input type="text" id="mapping4" placeholder="Giá trị cho 4" style="width: 100px;">
-      <input type="text" id="mapping5" placeholder="Giá trị cho 5" style="width: 100px;">
-      <input type="text" id="mapping6" placeholder="Giá trị cho 6" style="width: 100px;">
-      <button onclick="saveMapping()">Lưu mapping</button>
-
-      <div id="register-user" class="hidden">
-        <h3>Đăng ký tài khoản mới:</h3>
-        <input type="text" id="newUsername" placeholder="Tên tài khoản mới">
-        <input type="password" id="newPassword" placeholder="Mật khẩu mới">
-        <button onclick="registerNewUser()">Đăng ký</button>
-        <div id="register-error" style="color: red;"></div>
-      </div>
-    </div>
+    <h3>Cập nhật giá trị mapping:</h3>
+    <input type="text" id="mapping1" placeholder="Giá trị cho 1" style="width: 100px;">
+    <input type="text" id="mapping2" placeholder="Giá trị cho 2" style="width: 100px;">
+    <input type="text" id="mapping3" placeholder="Giá trị cho 3" style="width: 100px;">
+    <input type="text" id="mapping4" placeholder="Giá trị cho 4" style="width: 100px;">
+    <input type="text" id="mapping5" placeholder="Giá trị cho 5" style="width: 100px;">
+    <input type="text" id="mapping6" placeholder="Giá trị cho 6" style="width: 100px;">
+    <button onclick="saveMapping()">Lưu mapping</button>
 
     <!-- Dự đoán -->
+    <h3>Dự đoán MD5:</h3>
     <input type="text" id="md5Input" placeholder="Nhập mã MD5 (32 ký tự)" size="40">
     <button onclick="handleGenerate()">Tạo kết quả</button>
 
@@ -115,101 +96,7 @@
       return JSON.parse(localStorage.getItem('users') || '{}');
     }
 
-    function isAdmin(username) {
-      return username === 'phongvu';
-    }
-
-    function setLogin(username) {
-      localStorage.setItem('loggedInUser', username);
-      if (!isAdmin(username)) {
-        const usage = JSON.parse(localStorage.getItem('usage') || '{}');
-        if (!usage[username]) {
-          usage[username] = { count: 0 };
-          localStorage.setItem('usage', JSON.stringify(usage));
-        }
-      }
-    }
-
-    function getLoggedInUser() {
-      return localStorage.getItem('loggedInUser');
-    }
-
-    function logout() {
-      localStorage.removeItem('loggedInUser');
-    }
-
-    function getRemaining(username) {
-      if (isAdmin(username)) return 'Không giới hạn';
-      const usage = JSON.parse(localStorage.getItem('usage') || '{}');
-      if (usage[username]) {
-        return MAX_GUESSES - usage[username].count;
-      }
-      return 0;
-    }
-
-    function handleLogin() {
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value;
-      const users = loadUsers();
-
-      if ((username === 'phongvu' && password === '123') || (users[username] && users[username].password === password)) {
-        if (users[username]?.locked) {
-          document.getElementById('login-error').innerText = 'Tài khoản của bạn đã bị khóa.';
-          return;
-        }
-        setLogin(username);
-        updateUI();
-      } else {
-        document.getElementById('login-error').innerText = 'Sai tài khoản hoặc mật khẩu.';
-      }
-    }
-
-    function registerNewUser() {
-      const username = document.getElementById('newUsername').value.trim();
-      const password = document.getElementById('newPassword').value;
-
-      const users = loadUsers();
-      
-      if (users[username]) {
-        document.getElementById('register-error').innerText = 'Tài khoản đã tồn tại.';
-        return;
-      }
-      
-      users[username] = { password: password, locked: false, ip: localStorage.getItem('userIp') || '192.168.1.1' };
-      saveUsers(users);
-      document.getElementById('register-error').innerText = 'Tài khoản đã được đăng ký thành công.';
-      document.getElementById('newUsername').value = '';
-      document.getElementById('newPassword').value = '';
-    }
-
-    function handleRegister() {
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value;
-      const users = loadUsers();
-
-      if (!username || !password) {
-        document.getElementById('login-error').innerText = 'Không được để trống.';
-        return;
-      }
-
-      if (users[username]) {
-        document.getElementById('login-error').innerText = 'Tài khoản đã tồn tại.';
-      } else {
-        users[username] = { password: password, locked: false, ip: localStorage.getItem('userIp') || '192.168.1.1' };
-        saveUsers(users);
-        document.getElementById('login-error').innerText = 'Đăng ký thành công. Bạn có thể đăng nhập.';
-      }
-    }
-
-    function handleLogout() {
-      logout();
-      updateUI();
-    }
-
     function addBonusToUser() {
-      const user = getLoggedInUser();
-      if (!isAdmin(user)) return;
-
       const usernameToBonus = document.getElementById('userToBonus').value.trim();
       const bonus = parseInt(document.getElementById('bonusCount').value);
       const action = document.getElementById('bonusAction').value;
@@ -243,9 +130,6 @@
     }
 
     function manageUser() {
-      const user = getLoggedInUser();
-      if (!isAdmin(user)) return;
-
       const usernameToManage = document.getElementById('userToManage').value.trim();
       const action = document.getElementById('manageAction').value;
 
@@ -274,8 +158,7 @@
       userListDiv.innerHTML = '';
 
       for (const username in users) {
-        const isLoggedIn = (getLoggedInUser() === username);
-        const dotColor = isLoggedIn ? 'green' : users[username].locked ? 'red' : 'gray';
+        const dotColor = users[username].locked ? 'red' : 'gray';
         const statusClass = users[username].locked ? 'locked' : 'active';
         const remaining = getRemaining(username);
 
@@ -328,18 +211,15 @@
 
     function handleGenerate() {
       const md5 = document.getElementById('md5Input').value.trim();
-      const user = getLoggedInUser();
       const resultDiv = document.getElementById('result');
       const errorDiv = document.getElementById('error');
       const remainingDiv = document.getElementById('remaining');
       resultDiv.innerText = '';
       errorDiv.innerText = '';
 
-      if (!user) {
-        errorDiv.innerText = 'Bạn chưa đăng nhập.';
-        return;
-      }
-
+      const users = loadUsers();
+      // Mặc định chúng ta sẽ sử dụng một người dùng không có quản lý
+      const user = Object.keys(users).find(user => !users[user].locked) || 'guest';
       const usage = JSON.parse(localStorage.getItem('usage') || '{}');
       const used = usage[user]?.count || 0;
       const remaining = MAX_GUESSES - used;
@@ -358,7 +238,9 @@
         
         document.getElementById('md5Input').value = '';
 
-        if (!isAdmin(user)) {
+        // Cập nhật số lượt sử dụng
+        if (!users[user].locked) {
+          usage[user] = usage[user] || { count: 0 };
           usage[user].count += 1; 
           localStorage.setItem('usage', JSON.stringify(usage));
         }
@@ -366,9 +248,7 @@
         saveToHistory(user, result);
         updateHistory();
         
-        remainingDiv.innerText = isAdmin(user)
-          ? 'Bạn là admin: Không giới hạn lượt'
-          : `Số lượt còn lại: ${getRemaining(user)}`;
+        remainingDiv.innerText = `Số lượt còn lại: ${getRemaining(user)}`;
       } catch (e) {
         errorDiv.innerText = '❌ Lỗi: ' + e.message;
       }
@@ -400,81 +280,4 @@
       const mapping = getMapping();
       mapping[1] = replacement1;
       mapping[2] = replacement2;
-      mapping[3] = replacement3;
-      localStorage.setItem('customMapping', JSON.stringify(mapping)); // Lưu lại mapping đã cập nhật
-
-      // Ẩn ô nhập sau khi áp dụng
-      document.getElementById('replaceMapping').classList.add('hidden');
-    }
-    
-    function saveToHistory(user, result) {
-      let history = JSON.parse(localStorage.getItem('history_' + user) || '[]');
-      history.unshift(result);
-      if (history.length > 10) history = history.slice(0, 10);
-      localStorage.setItem('history_' + user, JSON.stringify(history));
-    }
-
-    function updateHistory() {
-      const user = getLoggedInUser();
-      const container = document.getElementById('history-list');
-      const history = JSON.parse(localStorage.getItem('history_' + user) || '[]');
-      container.innerHTML = '';
-      history.forEach((item, index) => {
-        const div = document.createElement('div');
-        div.className = 'history-item' + (index === 0 ? ' latest' : '');
-        div.textContent = `${index + 1}. ${item}`;
-        container.appendChild(div);
-      });
-    }
-
-    function clearHistory() {
-      const user = getLoggedInUser();
-      if (!user) {
-        alert('Bạn phải đăng nhập để xóa lịch sử.');
-        return;
-      }
-
-      // Xóa lịch sử
-      localStorage.removeItem('history_' + user);
-      updateHistory(); // Cập nhật lại giao diện sau khi xóa
-      alert('Đã xóa lịch sử kết quả gần nhất.');
-    }
-
-    function updateUI() {
-      const user = getLoggedInUser();
-      if (user) {
-        document.getElementById('login-form').classList.add('hidden');
-        document.getElementById('main-app').classList.remove('hidden');
-        document.getElementById('current-user').innerText = user;
-        document.getElementById('remaining').innerText = isAdmin(user)
-          ? 'Bạn là admin: Không giới hạn lượt'
-          : `Số lượt còn lại: ${getRemaining(user)}`;
-
-        document.getElementById('admin-panel').classList.toggle('hidden', !isAdmin(user));
-        
-        // Hiển thị mục đăng ký tài khoản khi là admin
-        document.getElementById('register-user').classList.toggle('hidden', !isAdmin(user));
-        
-        updateUserList(); 
-        loadCurrentMapping(); 
-        updateHistory();
-      } else {
-        document.getElementById('login-form').classList.remove('hidden');
-        document.getElementById('main-app').classList.add('hidden');
-      }
-    }
-
-    function loadCurrentMapping() {
-      const mapping = getMapping();
-      document.getElementById('mapping1').value = mapping[1];
-      document.getElementById('mapping2').value = mapping[2];
-      document.getElementById('mapping3').value = mapping[3];
-      document.getElementById('mapping4').value = mapping[4];
-      document.getElementById('mapping5').value = mapping[5];
-      document.getElementById('mapping6').value = mapping[6];
-    }
-
-    updateUI();
-  </script>
-</body>
-</html>
+      mapping[3] = replacement3
