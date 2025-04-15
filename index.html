@@ -24,7 +24,7 @@
     <div id="result" style="color: green;"></div>
     <div id="error" style="color: red;"></div>
 
-    <div id="replaceMapping" class="hidden">
+    <div id="replaceMapping" style="display:none;">
       <h3>Nhập 3 số để thay thế vào mapping (0-6):</h3>
       <input type="number" id="replacement1" placeholder="Số 1 (0-6)">
       <input type="number" id="replacement2" placeholder="Số 2 (0-6)">
@@ -84,11 +84,15 @@
       document.getElementById('replaceMapping').style.display = 'none'; // Ẩn ô nhập thay thế trước đó
 
       try {
-        const { result, mapped } = generateRandomResult(md5.toLowerCase());
-        resultDiv.innerText = '✅ Kết quả số gốc: ' + result.join(', ') + ' -> Ánh xạ: ' + mapped.join(', '); // Hiển thị 6 số được ánh xạ
+        const { mapped } = generateRandomResult(md5.toLowerCase());
+
+        // Chỉ hiển thị 3 số đã ánh xạ
+        const displayedResult = mapped.slice(0, 3);
+        resultDiv.innerText = '✅ Kết quả ánh xạ: ' + displayedResult.join(', '); // Hiển thị chỉ 3 số được ánh xạ
+        
         buildMappingInputs(mapped); // Xây dựng ô nhập cho ánh xạ mới
         localStorage.setItem('lastMapping', JSON.stringify(mapped)); // Lưu ánh xạ lại
-        saveToHistory('guest', mapped.join(', '));
+        saveToHistory('guest', displayedResult.join(', '));
         updateHistory();
         document.getElementById('replaceMapping').style.display = 'block'; // Hiện ô nhập số thay thế
       } catch (e) {
@@ -108,13 +112,11 @@
         input.placeholder = `Giá trị ${i}`;
         input.value = mapping[i];
 
-        if (lastMapping) {
-          // Ghi chú số ánh xạ
-          const label = document.createElement('label');
-          label.textContent = `Ánh xạ ${i}: ${lastMapping[i - 1]}`;
-          container.appendChild(label);
-        }
-
+        // Ghi chú số ánh xạ
+        const label = document.createElement('label');
+        label.textContent = `Ánh xạ ${i}: ${lastMapping[i - 1]}`;
+        container.appendChild(label);
+        
         container.appendChild(input);
       }
     }
