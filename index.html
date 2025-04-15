@@ -118,24 +118,16 @@
       const replacement2 = parseInt(document.getElementById('replacement2').value);
       const replacement3 = parseInt(document.getElementById('replacement3').value);
       
-      const resultDiv = document.getElementById('result');
-      const originalResult = resultDiv.innerText.split('✅ Kết quả: ')[1].split(', ');
-
-      // Áp dụng số thay thế
-      if (!isNaN(replacement1)) originalResult[0] = replacement1;
-      if (!isNaN(replacement2)) originalResult[1] = replacement2;
-      if (!isNaN(replacement3)) originalResult[2] = replacement3;
-
-      const newResult = `${originalResult.join(', ')}`;
-      resultDiv.innerText = '✅ Kết quả sau khi thay thế: ' + newResult;
-
       // Cập nhật giá trị mapping gốc
       const mapping = getMapping();
       mapping[1] = replacement1;
       mapping[2] = replacement2;
       mapping[3] = replacement3;
       localStorage.setItem('customMapping', JSON.stringify(mapping));
-      buildMappingInputs(); // Cập nhật ô input với giá trị mới
+
+      // Cập nhật ô input với giá trị mới
+      buildMappingInputs();
+      alert('Đã cập nhật giá trị mapping.');
     }
 
     function saveToHistory(user, result) {
