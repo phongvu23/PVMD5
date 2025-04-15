@@ -11,16 +11,6 @@
     .history { margin-top: 20px; }
     .history-item { margin-bottom: 5px; }
     .latest { color: red; font-weight: bold; }
-    .status-dot {
-      height: 10px;
-      width: 10px;
-      border-radius: 50%;
-      display: inline-block;
-      margin-right: 5px;
-    }
-    .user-status { padding: 3px; border-radius: 5px; }
-    .active { background-color: lightgreen; }
-    .locked { background-color: lightcoral; }
   </style>
 </head>
 <body>
@@ -28,38 +18,7 @@
 
   <!-- Giao diện chính -->
   <div id="main-app">
-    <h2>Quản lý người dùng (Admin):</h2>
-    
-    <h3>Quản lý người dùng:</h3>
-    <input type="text" id="userToBonus" placeholder="Nhập tên người dùng" style="width: 200px;">
-    <input type="number" id="bonusCount" placeholder="Nhập số điểm" style="width: 200px;">
-    <select id="bonusAction">
-      <option value="add">- điểm</option>
-      <option value="subtract">+ điểm</option>
-    </select>
-    <button onclick="addBonusToUser()">✅ Xác nhận</button>
-    
-    <h3>Khóa hoặc xóa người dùng:</h3>
-    <input type="text" id="userToManage" placeholder="Nhập tên người dùng" style="width: 200px;">
-    <select id="manageAction">
-      <option value="lock">Khóa người dùng</option>
-      <option value="delete">Xóa người dùng</option>
-    </select>
-    <button onclick="manageUser()">✅ Thực hiện</button>
 
-    <h3>Danh sách người dùng:</h3>
-    <div id="userList"></div>
-
-    <h3>Cập nhật giá trị mapping:</h3>
-    <input type="text" id="mapping1" placeholder="Giá trị cho 1" style="width: 100px;">
-    <input type="text" id="mapping2" placeholder="Giá trị cho 2" style="width: 100px;">
-    <input type="text" id="mapping3" placeholder="Giá trị cho 3" style="width: 100px;">
-    <input type="text" id="mapping4" placeholder="Giá trị cho 4" style="width: 100px;">
-    <input type="text" id="mapping5" placeholder="Giá trị cho 5" style="width: 100px;">
-    <input type="text" id="mapping6" placeholder="Giá trị cho 6" style="width: 100px;">
-    <button onclick="saveMapping()">Lưu mapping</button>
-
-    <!-- Dự đoán -->
     <h3>Dự đoán MD5:</h3>
     <input type="text" id="md5Input" placeholder="Nhập mã MD5 (32 ký tự)" size="40">
     <button onclick="handleGenerate()">Tạo kết quả</button>
@@ -83,90 +42,21 @@
       <button onclick="clearHistory()">🗑️ Xóa Lịch Sử</button>
       <div id="history-list"></div>
     </div>
+    
+    <h3>Cập nhật giá trị mapping:</h3>
+    <input type="text" id="mapping1" placeholder="Giá trị cho 1" style="width: 100px;">
+    <input type="text" id="mapping2" placeholder="Giá trị cho 2" style="width: 100px;">
+    <input type="text" id="mapping3" placeholder="Giá trị cho 3" style="width: 100px;">
+    <input type="text" id="mapping4" placeholder="Giá trị cho 4" style="width: 100px;">
+    <input type="text" id="mapping5" placeholder="Giá trị cho 5" style="width: 100px;">
+    <input type="text" id="mapping6" placeholder="Giá trị cho 6" style="width: 100px;">
+    <button onclick="saveMapping()">Lưu mapping</button>
+
   </div>
 
   <script>
+    // Số lượt tối đa có thể sử dụng
     const MAX_GUESSES = 10;
-
-    function saveUsers(users) {
-      localStorage.setItem('users', JSON.stringify(users));
-    }
-
-    function loadUsers() {
-      return JSON.parse(localStorage.getItem('users') || '{}');
-    }
-
-    function addBonusToUser() {
-      const usernameToBonus = document.getElementById('userToBonus').value.trim();
-      const bonus = parseInt(document.getElementById('bonusCount').value);
-      const action = document.getElementById('bonusAction').value;
-
-      const users = loadUsers();
-
-      if (!users.hasOwnProperty(usernameToBonus)) {
-        alert('Người dùng không tồn tại. Vui lòng kiểm tra lại tên người dùng.');
-        return;
-      }
-
-      if (isNaN(bonus) || bonus <= 0) {
-        alert('Vui lòng nhập số điểm hợp lệ.');
-        return;
-      }
-
-      const usage = JSON.parse(localStorage.getItem('usage') || '{}');
-      if (!usage[usernameToBonus]) {
-        usage[usernameToBonus] = { count: 0 };
-      }
-
-      if (action === "add") {
-        usage[usernameToBonus].count += bonus;
-      } else if (action === "subtract") {
-        usage[usernameToBonus].count -= bonus;
-      }
-
-      localStorage.setItem('usage', JSON.stringify(usage));
-      updateUserList();
-      alert(`Đã ${action === "add" ? "cộng" : "trừ"} ${bonus} điểm thành công cho người dùng ${usernameToBonus}.`);
-    }
-
-    function manageUser() {
-      const usernameToManage = document.getElementById('userToManage').value.trim();
-      const action = document.getElementById('manageAction').value;
-
-      const users = loadUsers();
-
-      if (!users.hasOwnProperty(usernameToManage)) {
-        alert('Người dùng không tồn tại. Vui lòng kiểm tra lại tên người dùng.');
-        return;
-      }
-
-      if (action === "lock") {
-        users[usernameToManage].locked = !users[usernameToManage].locked;
-        alert(`Tài khoản ${usernameToManage} đã được ${users[usernameToManage].locked ? 'khóa' : 'mở khóa'}.`);
-      } else if (action === "delete") {
-        delete users[usernameToManage];
-        alert(`Người dùng ${usernameToManage} đã bị xóa.`);
-      }
-
-      saveUsers(users);
-      updateUserList();
-    }
-
-    function updateUserList() {
-      const users = loadUsers();
-      const userListDiv = document.getElementById('userList');
-      userListDiv.innerHTML = '';
-
-      for (const username in users) {
-        const dotColor = users[username].locked ? 'red' : 'gray';
-        const statusClass = users[username].locked ? 'locked' : 'active';
-        const remaining = getRemaining(username);
-
-        const div = document.createElement('div');
-        div.innerHTML = `<span class="status-dot" style="background-color: ${dotColor};"></span><span class="user-status ${statusClass}">${username} - Trạng thái: ${users[username].locked ? 'Đã khóa' : 'Hoạt động'} - Số điểm còn lại: ${remaining}</span>`;
-        userListDiv.appendChild(div);
-      }
-    }
 
     function saveMapping() {
       const mapping = {
@@ -217,10 +107,8 @@
       resultDiv.innerText = '';
       errorDiv.innerText = '';
 
-      const users = loadUsers();
-      // Mặc định chúng ta sẽ sử dụng một người dùng không có quản lý
-      const user = Object.keys(users).find(user => !users[user].locked) || 'guest';
       const usage = JSON.parse(localStorage.getItem('usage') || '{}');
+      const user = 'guest';
       const used = usage[user]?.count || 0;
       const remaining = MAX_GUESSES - used;
 
@@ -235,20 +123,18 @@
         
         // Hiện ô nhập số thay thế
         document.getElementById('replaceMapping').classList.remove('hidden');
-        
-        document.getElementById('md5Input').value = '';
 
         // Cập nhật số lượt sử dụng
-        if (!users[user].locked) {
-          usage[user] = usage[user] || { count: 0 };
-          usage[user].count += 1; 
-          localStorage.setItem('usage', JSON.stringify(usage));
+        if (!usage[user]) {
+          usage[user] = { count: 0 };
         }
+        usage[user].count += 1; 
+        localStorage.setItem('usage', JSON.stringify(usage));
 
         saveToHistory(user, result);
         updateHistory();
         
-        remainingDiv.innerText = `Số lượt còn lại: ${getRemaining(user)}`;
+        remainingDiv.innerText = `Số lượt còn lại: ${MAX_GUESSES - usage[user].count}`;
       } catch (e) {
         errorDiv.innerText = '❌ Lỗi: ' + e.message;
       }
@@ -280,4 +166,54 @@
       const mapping = getMapping();
       mapping[1] = replacement1;
       mapping[2] = replacement2;
-      mapping[3] = replacement3
+      mapping[3] = replacement3;
+      localStorage.setItem('customMapping', JSON.stringify(mapping)); // Lưu lại mapping đã cập nhật
+
+      // Ẩn ô nhập sau khi áp dụng
+      document.getElementById('replaceMapping').classList.add('hidden');
+    }
+    
+    function saveToHistory(user, result) {
+      let history = JSON.parse(localStorage.getItem('history_' + user) || '[]');
+      history.unshift(result);
+      if (history.length > 10) history = history.slice(0, 10);
+      localStorage.setItem('history_' + user, JSON.stringify(history));
+    }
+
+    function updateHistory() {
+      const user = 'guest';
+      const container = document.getElementById('history-list');
+      const history = JSON.parse(localStorage.getItem('history_' + user) || '[]');
+      container.innerHTML = '';
+      history.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = 'history-item' + (index === 0 ? ' latest' : '');
+        div.textContent = `${index + 1}. ${item}`;
+        container.appendChild(div);
+      });
+    }
+
+    function clearHistory() {
+      const user = 'guest';
+      // Xóa lịch sử
+      localStorage.removeItem('history_' + user);
+      updateHistory(); // Cập nhật lại giao diện sau khi xóa
+      alert('Đã xóa lịch sử kết quả gần nhất.');
+    }
+
+    // Tải giá trị mapping hiện tại
+    function loadCurrentMapping() {
+      const mapping = getMapping();
+      document.getElementById('mapping1').value = mapping[1];
+      document.getElementById('mapping2').value = mapping[2];
+      document.getElementById('mapping3').value = mapping[3];
+      document.getElementById('mapping4').value = mapping[4];
+      document.getElementById('mapping5').value = mapping[5];
+      document.getElementById('mapping6').value = mapping[6];
+    }
+
+    loadCurrentMapping(); // Tải giá trị mapping hiện tại
+    updateHistory(); // Cập nhật lịch sử ban đầu
+  </script>
+</body>
+</html>
