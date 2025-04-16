@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>MD5 </title>
+  <title>MD5</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 30px; background: #f2f2f2; }
     input, button { padding: 10px; margin: 5px; font-size: 16px; }
@@ -39,12 +39,13 @@
 
   <script>
     function generateRandomMapping() {
-      let mapping = [];
-      for (let i = 0; i < 10; i++) { // Random hóa 10 lần
-        const randomValue = Math.floor(Math.random() * 6) + 1; // Giá trị từ 1 đến 6
-        mapping.push(randomValue);
+      const numbers = [1, 2, 3, 4, 5, 6];
+      // Trộn ngẫu nhiên mảng numbers
+      for (let i = numbers.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
       }
-      return mapping;
+      return numbers;
     }
 
     function generateRandomResult(md5Hash) {
