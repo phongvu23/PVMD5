@@ -5,7 +5,7 @@
   <title>MD5 Dự Đoán</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 30px; background: #f2f2f2; }
-    input, button, select { padding: 10px; margin: 5px; font-size: 16px; }
+    input, button { padding: 10px; margin: 5px; font-size: 16px; }
     .hidden { display: none; }
     #result, #error, #remaining { margin-top: 10px; font-weight: bold; }
     .history { margin-top: 20px; }
@@ -98,9 +98,10 @@
     }
 
     function generateRandomMapping() {
-      const mapping = {};
-      for (let i = 1; i <= 6; i++) {
-        mapping[i] = Math.floor(Math.random() * 100) + 1; // Giá trị từ 1 đến 100
+      let mapping = [];
+      for (let i = 0; i < 10; i++) { // Random hóa 10 lần
+        const randomValue = Math.floor(Math.random() * 6) + 1; // Giá trị từ 1 đến 6
+        mapping.push(randomValue);
       }
       return mapping;
     }
@@ -111,7 +112,7 @@
       }
 
       const mapping = generateRandomMapping();
-      console.log("Giá trị mapping ngẫu nhiên:", mapping); // Hiển thị giá trị mapping
+      console.log("Giá trị random mapping:", mapping); // Hiển thị giá trị mapping
 
       let number = BigInt('0x' + md5Hash);
       const num1 = Number((number % 6n) + 1n);
@@ -120,7 +121,7 @@
       number = ((number - 5n) * 2n) % 10000000000n;
       const num3 = Number((number % 6n) + 1n);
 
-      const mapped = [mapping[num1], mapping[num2], mapping[num3]];
+      const mapped = [mapping[num1 - 1], mapping[num2 - 1], mapping[num3 - 1]]; // Sử dụng các vị trí random
       return { result: `${mapped.join('-')}`, original: mapped };
     }
 
