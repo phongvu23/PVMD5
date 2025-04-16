@@ -98,11 +98,14 @@
       multipleResultsDiv.innerHTML = ''; // Xóa kết quả trước đó
 
       try {
+        let delay = 1000; // Thời gian delay giữa các kết quả (1 giây)
         for (let i = 0; i < 3; i++) {
-          const { result, sum } = generateRandomResult(md5.toLowerCase());
-          const resultDiv = document.createElement('div');
-          resultDiv.innerText = `Kết quả ${i + 1}: ${result}`;
-          multipleResultsDiv.appendChild(resultDiv);
+          setTimeout(() => {
+            const { result, sum } = generateRandomResult(md5.toLowerCase());
+            const resultDiv = document.createElement('div');
+            resultDiv.innerText = `Kết quả ${i + 1}: ${result}`;
+            multipleResultsDiv.appendChild(resultDiv);
+          }, delay * i); // Tính toán thời gian delay dựa trên chỉ số i
         }
       } catch (e) {
         multipleResultsDiv.innerText = '❌ Lỗi: ' + e.message;
