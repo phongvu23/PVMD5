@@ -7,7 +7,7 @@
     body { font-family: Arial, sans-serif; padding: 30px; background: #f2f2f2; }
     input, button { padding: 10px; margin: 5px; font-size: 16px; }
     .hidden { display: none; }
-    #result, #error, #remaining, #result-message { margin-top: 10px; font-weight: bold; }
+    #result, #error, #result-message { margin-top: 10px; font-weight: bold; }
     #mapping { margin-top: 20px; font-size: 14px; color: blue; }
     .history { margin-top: 20px; }
     .history-item { margin-bottom: 5px; }
@@ -17,23 +17,11 @@
 <body>
   <h1>🔐 MD5</h1>
 
-  <!-- Đăng nhập -->
-  <div id="login-form">
-    <input type="text" id="username" placeholder="Tên đăng nhập">
-    <input type="password" id="password" placeholder="Mật khẩu">
-    <button onclick="handleLogin()">Đăng nhập</button>
-    <div id="login-error" style="color: red;"></div>
-  </div>
-
   <!-- Giao diện chính -->
-  <div id="main-app" class="hidden">
-    <p>👋 Xin chào, <b id="current-user"></b> <button onclick="handleLogout()">Đăng xuất</button></p>
-
-    <!-- Dự đoán -->
+  <div id="main-app">
     <input type="text" id="md5Input" placeholder="Nhập mã MD5 (32 ký tự)" size="40">
     <button onclick="handleGenerate()">Tạo kết quả</button>
 
-    <div id="remaining"></div>
     <div id="result" style="color: green;"></div>
     <div id="error" style="color: red;"></div>
     <div id="result-message" style="color: orange;"></div> <!-- Mục thông báo kết quả -->
@@ -50,58 +38,6 @@
   </div>
 
   <script>
-    const MAX_GUESSES = 10;
-
-    function saveUsers(users) {
-      localStorage.setItem('users', JSON.stringify(users));
-    }
-
-    function loadUsers() {
-      return JSON.parse(localStorage.getItem('users') || '{}');
-    }
-
-    function isAdmin(username) {
-      return username === 'phongvu';
-    }
-
-    function setLogin(username) {
-      localStorage.setItem('loggedInUser', username);
-    }
-
-    function getLoggedInUser() {
-      return localStorage.getItem('loggedInUser');
-    }
-
-    function logout() {
-      localStorage.removeItem('loggedInUser');
-    }
-
-    function getRemaining(username) {
-      const usage = JSON.parse(localStorage.getItem('usage') || '{}');
-      if (usage[username]) {
-        return MAX_GUESSES - usage[username].count;
-      }
-      return 0;
-    }
-
-    function handleLogin() {
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value;
-      const users = loadUsers();
-
-      if ((username === 'phongvu' && password === '123') || (users[username] && users[username].password === password)) {
-        setLogin(username);
-        updateUI();
-      } else {
-        document.getElementById('login-error').innerText = 'Sai tài khoản hoặc mật khẩu.';
-      }
-    }
-
-    function handleLogout() {
-      logout();
-      updateUI();
-    }
-
     function generateRandomMapping() {
       let mapping = [];
       for (let i = 0; i < 10; i++) { // Random hóa 10 lần
@@ -117,9 +53,6 @@
       }
 
       const mapping = generateRandomMapping();
-      console.log("Giá trị random mapping:", mapping); // Hiển thị giá trị mapping trên console
-
-      // Hiển thị giá trị mapping lên giao diện web
       document.getElementById('mapping').innerText = `Giá trị mapping: ${mapping.join(', ')}`;
 
       let number = BigInt('0x' + md5Hash);
@@ -129,110 +62,48 @@
       number = ((number - 5n) * 2n) % 10000000000n;
       const num3 = Number((number % 6n) + 1n);
 
-      const mapped = [mapping[num1 - 1], mapping[num2 - 1], mapping[num3 - 1]]; // Sử dụng các vị trí random
-      return { result: `${mapped.join('-')}`, original: mapped, sum: mapped.reduce((a, b) => a + b, 0) }; // Trả về tổng của 3 số
+      const mapped = [mapping[num1 - 1], mapping[num2 - 1], mapping[num3 - 1]];
+      return { result: `${mapped.join('-')}`, original: mapped, sum: mapped.reduce((a, b) => a + b, 0) };
     }
 
     function handleGenerate() {
       const md5 = document.getElementById('md5Input').value.trim();
-      const user = getLoggedInUser();
       const resultDiv = document.getElementById('result');
       const errorDiv = document.getElementById('error');
-      const resultMessageDiv = document.getElementById('result-message'); // Thêm mục thông báo
+      const resultMessageDiv = document.getElementById('result-message');
       resultDiv.innerText = '';
       errorDiv.innerText = '';
-      resultMessageDiv.innerText = ''; // Đặt lại thông báo
-
-      if (!user) {
-        errorDiv.innerText = 'Bạn chưa đăng nhập.';
-        return;
-      }
-
-      const usage = JSON.parse(localStorage.getItem('usage') || '{}');
-      const used = usage[user]?.count || 0;
-      const remaining = MAX_GUESSES - used;
-
-      if (remaining <= 0) {
-        errorDiv.innerText = 'Bạn không có lượt nào. Vui lòng yêu cầu admin cộng điểm.';
-        return;
-      }
-
-      let totalTails = 0; // Đếm số lần "Tài"
-      let totalHeads = 0; // Đếm số lần "Xỉu"
+      resultMessageDiv.innerText = ''; 
 
       try {
         const { result, sum } = generateRandomResult(md5.toLowerCase());
         resultDiv.innerText = '✅ Kết quả: ' + result;
 
-        // Thêm thông báo về Tài hoặc Xỉu dựa trên tổng
         if (sum > 11) {
           resultMessageDiv.innerText = '❌ Tổng lớn hơn 11: TÀI!';
-          totalHeads += 1; // Tăng đếm số lần Xỉu
-          totalTails += randomXiuResults(5); // Tạo thêm 5 lần random nếu ra Xỉu
         } else if (sum > 10) {
           resultMessageDiv.innerText = '✅ Tổng lớn hơn 10: Tài!';
-          totalTails += 1; // Tăng đếm số lần Tài
-          totalHeads += randomTaiResults(10); // Tạo thêm 10 lần random nếu ra Tài
         } else {
           resultMessageDiv.innerText = '⚠️ Tổng nhỏ hơn hoặc bằng 10!';
         }
 
-        if (!isAdmin(user)) {
-          usage[user] = usage[user] || { count: 0 };
-          usage[user].count += 1; 
-          localStorage.setItem('usage', JSON.stringify(usage));
-        }
-
-        saveToHistory(user, result);
+        saveToHistory(result);
         updateHistory();
-
-        // Tính tỷ lệ phần trăm Tài và Xỉu
-        displayPercentage(totalTails, totalHeads);
       } catch (e) {
         errorDiv.innerText = '❌ Lỗi: ' + e.message;
       }
     }
 
-    function randomXiuResults(count) {
-      // Tạo ra kết quả random cho 5 lần Xỉu và tính tổng
-      let total = 0;
-      for (let i = 0; i < count; i++) {
-        let result = Math.floor(Math.random() * 6) + 1; // Giá trị từ 1 đến 6
-        total += result;
-      }
-      return total; // Trả về tổng các số random
-    }
-
-    function randomTaiResults(count) {
-      // Tạo ra kết quả random cho 10 lần Tài và tính tổng
-      let total = 0;
-      for (let i = 0; i < count; i++) {
-        let result = Math.floor(Math.random() * 6) + 1; // Giá trị từ 1 đến 6
-        total += result;
-      }
-      return total; // Trả về tổng các số random
-    }
-
-    function displayPercentage(tails, heads) {
-      const total = tails + heads;
-      const percentageTails = total > 0 ? ((tails / total) * 100).toFixed(2) : 0;
-      const percentageHeads = total > 0 ? ((heads / total) * 100).toFixed(2) : 0;
-
-      const message = `Tỷ lệ phần trăm: Tài (${percentageTails}%) - Xỉu (${percentageHeads}%)`;
-      document.getElementById('result-message').innerText += '\n' + message;
-    }
-
-    function saveToHistory(user, result) {
-      let history = JSON.parse(localStorage.getItem('history_' + user) || '[]');
+    function saveToHistory(result) {
+      let history = JSON.parse(localStorage.getItem('history') || '[]');
       history.unshift(result);
       if (history.length > 10) history = history.slice(0, 10);
-      localStorage.setItem('history_' + user, JSON.stringify(history));
+      localStorage.setItem('history', JSON.stringify(history));
     }
 
     function updateHistory() {
-      const user = getLoggedInUser();
       const container = document.getElementById('history-list');
-      const history = JSON.parse(localStorage.getItem('history_' + user) || '[]');
+      const history = JSON.parse(localStorage.getItem('history') || '[]');
       container.innerHTML = '';
       history.forEach((item, index) => {
         const div = document.createElement('div');
@@ -243,32 +114,12 @@
     }
 
     function clearHistory() {
-      const user = getLoggedInUser();
-      if (!user) {
-        alert('Bạn phải đăng nhập để xóa lịch sử.');
-        return;
-      }
-
-      // Xóa lịch sử
-      localStorage.removeItem('history_' + user);
-      updateHistory(); // Cập nhật lại giao diện sau khi xóa
+      localStorage.removeItem('history');
+      updateHistory();
       alert('Đã xóa lịch sử kết quả gần nhất.');
     }
 
-    function updateUI() {
-      const user = getLoggedInUser();
-      if (user) {
-        document.getElementById('login-form').classList.add('hidden');
-        document.getElementById('main-app').classList.remove('hidden');
-        document.getElementById('current-user').innerText = user;
-        document.getElementById('remaining').innerText = `Số lượt còn lại: ${getRemaining(user)}`;
-      } else {
-        document.getElementById('login-form').classList.remove('hidden');
-        document.getElementById('main-app').classList.add('hidden');
-      }
-    }
-
-    updateUI();
+    updateHistory();
   </script>
 </body>
 </html>
