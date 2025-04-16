@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>MD5 Dự Đoán</title>
+  <title>MD5 </title>
   <style>
     body { font-family: Arial, sans-serif; padding: 30px; background: #f2f2f2; }
     input, button { padding: 10px; margin: 5px; font-size: 16px; }
@@ -15,7 +15,7 @@
   </style>
 </head>
 <body>
-  <h1>🔐 Hệ thống Dự Đoán MD5</h1>
+  <h1>🔐 MD5</h1>
 
   <!-- Đăng nhập -->
   <div id="login-form">
@@ -166,7 +166,7 @@
 
         // Thêm thông báo về Tài hoặc Xỉu dựa trên tổng
         if (sum > 11) {
-          resultMessageDiv.innerText = '❌ Tổng lớn hơn 11: Xỉu!';
+          resultMessageDiv.innerText = '❌ Tổng lớn hơn 11: TÀI!';
           totalHeads += 1; // Tăng đếm số lần Xỉu
           totalTails += randomXiuResults(5); // Tạo thêm 5 lần random nếu ra Xỉu
         } else if (sum > 10) {
