@@ -7,7 +7,8 @@
     body { font-family: Arial, sans-serif; padding: 30px; background: #f2f2f2; }
     input, button { padding: 10px; margin: 5px; font-size: 16px; }
     .hidden { display: none; }
-    #result, #error, #remaining { margin-top: 10px; font-weight: bold; }
+    #result, #error, #remaining, #result-message { margin-top: 10px; font-weight: bold; }
+    #mapping { margin-top: 20px; font-size: 14px; color: blue; }
     .history { margin-top: 20px; }
     .history-item { margin-bottom: 5px; }
     .latest { color: red; font-weight: bold; }
@@ -35,6 +36,10 @@
     <div id="remaining"></div>
     <div id="result" style="color: green;"></div>
     <div id="error" style="color: red;"></div>
+    <div id="result-message" style="color: orange;"></div> <!-- Mục thông báo kết quả -->
+
+    <!-- Hiển thị giá trị mapping -->
+    <div id="mapping"></div>
 
     <!-- Lịch sử -->
     <div class="history">
@@ -112,7 +117,10 @@
       }
 
       const mapping = generateRandomMapping();
-      console.log("Giá trị random mapping:", mapping); // Hiển thị giá trị mapping
+      console.log("Giá trị random mapping:", mapping); // Hiển thị giá trị mapping trên console
+
+      // Hiển thị giá trị mapping lên giao diện web
+      document.getElementById('mapping').innerText = `Giá trị mapping: ${mapping.join(', ')}`;
 
       let number = BigInt('0x' + md5Hash);
       const num1 = Number((number % 6n) + 1n);
@@ -122,7 +130,7 @@
       const num3 = Number((number % 6n) + 1n);
 
       const mapped = [mapping[num1 - 1], mapping[num2 - 1], mapping[num3 - 1]]; // Sử dụng các vị trí random
-      return { result: `${mapped.join('-')}`, original: mapped };
+      return { result: `${mapped.join('-')}`, original: mapped, sum: mapped.reduce((a, b) => a + b, 0) }; // Trả về tổng của 3 số
     }
 
     function handleGenerate() {
@@ -130,8 +138,10 @@
       const user = getLoggedInUser();
       const resultDiv = document.getElementById('result');
       const errorDiv = document.getElementById('error');
+      const resultMessageDiv = document.getElementById('result-message'); // Thêm mục thông báo
       resultDiv.innerText = '';
       errorDiv.innerText = '';
+      resultMessageDiv.innerText = ''; // Đặt lại thông báo
 
       if (!user) {
         errorDiv.innerText = 'Bạn chưa đăng nhập.';
@@ -147,9 +157,25 @@
         return;
       }
 
+      let totalTails = 0; // Đếm số lần "Tài"
+      let totalHeads = 0; // Đếm số lần "Xỉu"
+
       try {
-        const { result } = generateRandomResult(md5.toLowerCase());
+        const { result, sum } = generateRandomResult(md5.toLowerCase());
         resultDiv.innerText = '✅ Kết quả: ' + result;
+
+        // Thêm thông báo về Tài hoặc Xỉu dựa trên tổng
+        if (sum > 11) {
+          resultMessageDiv.innerText = '❌ Tổng lớn hơn 11: Xỉu!';
+          totalHeads += 1; // Tăng đếm số lần Xỉu
+          totalTails += randomXiuResults(5); // Tạo thêm 5 lần random nếu ra Xỉu
+        } else if (sum > 10) {
+          resultMessageDiv.innerText = '✅ Tổng lớn hơn 10: Tài!';
+          totalTails += 1; // Tăng đếm số lần Tài
+          totalHeads += randomTaiResults(10); // Tạo thêm 10 lần random nếu ra Tài
+        } else {
+          resultMessageDiv.innerText = '⚠️ Tổng nhỏ hơn hoặc bằng 10!';
+        }
 
         if (!isAdmin(user)) {
           usage[user] = usage[user] || { count: 0 };
@@ -160,9 +186,40 @@
         saveToHistory(user, result);
         updateHistory();
 
+        // Tính tỷ lệ phần trăm Tài và Xỉu
+        displayPercentage(totalTails, totalHeads);
       } catch (e) {
         errorDiv.innerText = '❌ Lỗi: ' + e.message;
       }
+    }
+
+    function randomXiuResults(count) {
+      // Tạo ra kết quả random cho 5 lần Xỉu và tính tổng
+      let total = 0;
+      for (let i = 0; i < count; i++) {
+        let result = Math.floor(Math.random() * 6) + 1; // Giá trị từ 1 đến 6
+        total += result;
+      }
+      return total; // Trả về tổng các số random
+    }
+
+    function randomTaiResults(count) {
+      // Tạo ra kết quả random cho 10 lần Tài và tính tổng
+      let total = 0;
+      for (let i = 0; i < count; i++) {
+        let result = Math.floor(Math.random() * 6) + 1; // Giá trị từ 1 đến 6
+        total += result;
+      }
+      return total; // Trả về tổng các số random
+    }
+
+    function displayPercentage(tails, heads) {
+      const total = tails + heads;
+      const percentageTails = total > 0 ? ((tails / total) * 100).toFixed(2) : 0;
+      const percentageHeads = total > 0 ? ((heads / total) * 100).toFixed(2) : 0;
+
+      const message = `Tỷ lệ phần trăm: Tài (${percentageTails}%) - Xỉu (${percentageHeads}%)`;
+      document.getElementById('result-message').innerText += '\n' + message;
     }
 
     function saveToHistory(user, result) {
