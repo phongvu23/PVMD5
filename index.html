@@ -11,7 +11,7 @@
   </style>
 </head>
 <body>
-  <h1>🔍 Dự đoán Tài Xỉu từ mã MD5 (Tham khảo)</h1>
+  <h1>🔍 Dự đoán MD5 (Tham khảo)</h1>
   <input type="text" id="md5" placeholder="Nhập mã MD5...">
   <br>
   <button onclick="calculate()">Xem kết quả</button>
@@ -41,7 +41,7 @@
       const d2 = (Math.floor(value / 6) % 6) + 1;
       const d3 = (Math.floor(value / 36) % 6) + 1;
       const sum = d1 + d2 + d3;
-      const result = sum >= 11 ? "🔥 TÀI" : "❄️ XỈU";
+      const result = sum >= 11 ? "🔥 ÀI" : "❄️ ỈU";
 
       document.getElementById("result").innerText = `🎲 ${d1}-${d2}-${d3} = ${sum} → ${result} (THAM KHẢO)`;
     }
