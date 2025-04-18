@@ -2,142 +2,49 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>MD5</title>
+  <title>MD5 → Tài Xỉu (Tham khảo)</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 30px; background: #f2f2f2; }
-    input, button { padding: 10px; margin: 5px; font-size: 16px; }
-    #result, #error, #result-message { margin-top: 10px; font-weight: bold; }
-    #mapping { margin-top: 20px; font-size: 14px; color: blue; }
-    .history { margin-top: 20px; }
-    .history-item { margin-bottom: 5px; }
-    .latest { color: red; font-weight: bold; }
+    body { font-family: Arial, sans-serif; background: #f8f8f8; padding: 40px; text-align: center; }
+    input { padding: 8px; width: 300px; font-size: 16px; }
+    button { padding: 8px 16px; font-size: 16px; margin-top: 10px; }
+    #result { margin-top: 20px; font-size: 20px; font-weight: bold; color: #222; }
   </style>
 </head>
 <body>
-  <h1>🔐 MD5</h1>
-
-  <div id="main-app">
-    <input type="text" id="md5Input" placeholder="Nhập mã MD5 (32 ký tự)" size="40">
-    <button onclick="handleGenerate()">Tạo kết quả</button>
-    <button onclick="handleMultipleGenerations()">Tạo nhiều kết quả</button> <!-- Nút mới ở đây -->
-
-    <div id="result" style="color: green;"></div>
-    <div id="error" style="color: red;"></div>
-    <div id="result-message" style="color: orange;"></div> 
-    <div id="multipleResults" style="margin-top: 10px;"></div> <!-- Khu vực hiển thị kết quả nhiều lần -->
-
-    <div id="mapping"></div>
-
-    <div class="history">
-      <h3>Lịch sử kết quả gần nhất:</h3>
-      <button onclick="clearHistory()">🗑️ Xóa Lịch Sử</button>
-      <div id="history-list"></div>
-    </div>
-  </div>
+  <h1>🔍 Dự đoán Tài Xỉu từ mã MD5 (Tham khảo)</h1>
+  <input type="text" id="md5" placeholder="Nhập mã MD5...">
+  <br>
+  <button onclick="calculate()">Xem kết quả</button>
+  <div id="result"></div>
 
   <script>
-    function generateRandomMapping() {
-      const mapping = [1, 2, 3, 4, 5, 6];
-      for (let i = mapping.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [mapping[i], mapping[j]] = [mapping[j], mapping[i]];
-      }
-      return mapping;
-    }
-
-    function generateRandomResult(md5Hash) {
-      if (typeof md5Hash !== 'string' || md5Hash.length !== 32 || !/^[0-9a-f]{32}$/i.test(md5Hash)) {
-        throw new Error("Mã MD5 không hợp lệ. Vui lòng nhập chuỗi MD5 gồm 32 ký tự hexa.");
+    function calculate() {
+      const md5 = document.getElementById("md5").value.trim().toLowerCase();
+      if (!/^[0-9a-f]{32}$/.test(md5)) {
+        document.getElementById("result").innerText = "❌ Vui lòng nhập mã MD5 hợp lệ (32 ký tự hex).";
+        return;
       }
 
-      const mapping = generateRandomMapping();
-      document.getElementById('mapping').innerText = `Giá trị mapping: ${mapping.join(', ')}`;
+      const start = Math.floor(Math.random() * (md5.length - 10));
+      const length = Math.floor(Math.random() * 5) + 6; // 6 đến 10
+      const short = md5.substring(start, start + length);
 
-      let number = BigInt('0x' + md5Hash);
-      const num1 = Number((number % 6n) + 1n);
-      number = (number * 3n + 7n) % 10000000000n;
-      const num2 = Number((number % 6n) + 1n);
-      number = ((number - 5n) * 2n) % 10000000000n;
-      const num3 = Number((number % 6n) + 1n);
-
-      const mapped = [mapping[num1 - 1], mapping[num2 - 1], mapping[num3 - 1]];
-      return { result: `${mapped.join('-')}`, original: mapped, sum: mapped.reduce((a, b) => a + b, 0) };
-    }
-
-    function handleGenerate() {
-      const md5 = document.getElementById('md5Input').value.trim();
-      const resultDiv = document.getElementById('result');
-      const errorDiv = document.getElementById('error');
-      const resultMessageDiv = document.getElementById('result-message');
-      resultDiv.innerText = '';
-      errorDiv.innerText = '';
-      resultMessageDiv.innerText = ''; 
-
+      let value;
       try {
-        const { result, sum } = generateRandomResult(md5.toLowerCase());
-        resultDiv.innerText = '✅ Kết quả: ' + result;
-
-        if (sum > 11) {
-          resultMessageDiv.innerText = '❌ Tổng lớn hơn 11: TÀI!';
-        } else if (sum > 10) {
-          resultMessageDiv.innerText = '✅ Tổng lớn hơn 10: Tài!';
-        } else {
-          resultMessageDiv.innerText = '⚠️ Tổng nhỏ hơn hoặc bằng 10!';
-        }
-
-        saveToHistory(result);
-        updateHistory();
-      } catch (e) {
-        errorDiv.innerText = '❌ Lỗi: ' + e.message;
+        value = parseInt(short, 16);
+      } catch {
+        document.getElementById("result").innerText = "❌ Lỗi chuyển đổi đoạn MD5.";
+        return;
       }
+
+      const d1 = (value % 6) + 1;
+      const d2 = (Math.floor(value / 6) % 6) + 1;
+      const d3 = (Math.floor(value / 36) % 6) + 1;
+      const sum = d1 + d2 + d3;
+      const result = sum >= 11 ? "🔥 TÀI" : "❄️ XỈU";
+
+      document.getElementById("result").innerText = `🎲 ${d1}-${d2}-${d3} = ${sum} → ${result} (THAM KHẢO)`;
     }
-
-    function handleMultipleGenerations() {
-      const md5 = document.getElementById('md5Input').value.trim();
-      const multipleResultsDiv = document.getElementById('multipleResults');
-      multipleResultsDiv.innerHTML = ''; // Xóa kết quả trước đó
-
-      try {
-        let delay = 1000; // Thời gian delay giữa các kết quả (1 giây)
-        for (let i = 0; i < 3; i++) {
-          setTimeout(() => {
-            const { result, sum } = generateRandomResult(md5.toLowerCase());
-            const resultDiv = document.createElement('div');
-            resultDiv.innerText = `Kết quả ${i + 1}: ${result}`;
-            multipleResultsDiv.appendChild(resultDiv);
-          }, delay * i); // Tính toán thời gian delay dựa trên chỉ số i
-        }
-      } catch (e) {
-        multipleResultsDiv.innerText = '❌ Lỗi: ' + e.message;
-      }
-    }
-
-    function saveToHistory(result) {
-      let history = JSON.parse(localStorage.getItem('history') || '[]');
-      history.unshift(result);
-      if (history.length > 10) history = history.slice(0, 10);
-      localStorage.setItem('history', JSON.stringify(history));
-    }
-
-    function updateHistory() {
-      const container = document.getElementById('history-list');
-      const history = JSON.parse(localStorage.getItem('history') || '[]');
-      container.innerHTML = '';
-      history.forEach((item, index) => {
-        const div = document.createElement('div');
-        div.className = 'history-item' + (index === 0 ? ' latest' : '');
-        div.textContent = `${index + 1}. ${item}`;
-        container.appendChild(div);
-      });
-    }
-
-    function clearHistory() {
-      localStorage.removeItem('history');
-      updateHistory();
-      alert('Đã xóa lịch sử kết quả gần nhất.');
-    }
-
-    updateHistory();
   </script>
 </body>
 </html>
