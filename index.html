@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>MD5 → Tài Xỉu (Tham khảo)</title>
+  <title>MD5 (Tham khảo)</title>
   <style>
     body { font-family: Arial, sans-serif; background: #f8f8f8; padding: 40px; text-align: center; }
     input { padding: 8px; width: 300px; font-size: 16px; margin: 5px 0; }
@@ -14,7 +14,7 @@
   </style>
 </head>
 <body>
-  <h1>🎲 Dự đoán Tài Xỉu từ MD5 (Tham khảo)</h1>
+  <h1>🎲(Tham khảo)</h1>
 
   <div class="box">
     <div class="title">🔁 Chế độ Random (mỗi lần đoạn MD5 sẽ khác)</div>
@@ -55,7 +55,7 @@
       const d2 = (Math.floor(value / 6) % 6) + 1;
       const d3 = (Math.floor(value / 36) % 6) + 1;
       const sum = d1 + d2 + d3;
-      const result = sum >= 11 ? "🔥 TÀI" : "❄️ XỈU";
+      const result = sum >= 11 ? "🔥" : "❄️ ";
 
       resultEl.innerText = `${d1}-${d2}-${d3} = ${sum} → ${result}`;
       debugEl.innerText = `Đoạn dùng: '${short}' (vị trí ${start}, dài ${length})`;
@@ -78,7 +78,7 @@
       const d2 = (Math.floor(value / 6) % 6) + 1;
       const d3 = (Math.floor(value / 36) % 6) + 1;
       const sum = d1 + d2 + d3;
-      const result = sum >= 11 ? "🔥 TÀI" : "❄️ XỈU";
+      const result = sum >= 11 ? "🔥 " : "❄️ ";
 
       resultEl.innerText = `${d1}-${d2}-${d3} = ${sum} → ${result}`;
       debugEl.innerText = `Đoạn cố định: '${short}' (vị trí 0, dài 8)`;
