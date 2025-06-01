@@ -1,88 +1,199 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <title>MD5 (Tham khảo)</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MD5 Dice Analyzer</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f8f8f8; padding: 40px; text-align: center; }
-    input { padding: 8px; width: 300px; font-size: 16px; margin: 5px 0; }
-    button { padding: 8px 16px; font-size: 16px; margin: 5px; }
-    .box { background: #fff; border-radius: 8px; padding: 20px; margin: 20px auto; width: 500px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    .title { font-size: 18px; font-weight: bold; margin-bottom: 10px; }
-    .result { margin-top: 12px; font-size: 18px; font-weight: bold; color: #222; }
-    .debug { margin-top: 6px; font-size: 14px; color: #777; }
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background: #111;
+    }
+
+    @keyframes neonPulse {
+        0%, 100% { box-shadow: 0 0 12px 2px var(--neon-color); }
+        50% { box-shadow: 0 0 20px 6px var(--neon-color); }
+    }
+
+    @keyframes sparkle {
+        0% { transform: translateY(0) scale(1); opacity: 1; }
+        100% { transform: translateY(-60px) scale(0.5); opacity: 0; }
+    }
+
+    @keyframes pac-run {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(100%); }
+    }
+
+    .md5-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 10px;
+        border: 2px solid gold;
+        border-radius: 20px;
+        font-size: 20px;
+        font-weight: bold;
+        font-family: monospace;
+        z-index: 9999;
+        backdrop-filter: blur(5px);
+        color: gold;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: move;
+        --neon-color: gold;
+        animation: neonPulse 1.5s infinite ease-in-out;
+        background: rgba(0, 0, 0, 0.6);
+    }
+
+    .sparkle {
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        background: gold;
+        border-radius: 50%;
+        pointer-events: none;
+        animation: sparkle 1s linear forwards;
+    }
+
+    .pacman {
+        position: absolute;
+        top: -25px;
+        left: 0;
+        font-size: 20px;
+        animation: pac-run 3s linear infinite;
+        pointer-events: none;
+        user-select: none;
+    }
   </style>
 </head>
 <body>
-  <h1>🎲(Tham khảo)</h1>
-
-  <div class="box">
-    <div class="title">🔁 Chế độ Random (mỗi lần đoạn MD5 sẽ khác)</div>
-    <input type="text" id="md5_random" placeholder="Nhập mã MD5...">
-    <br>
-    <button onclick="calculateRandom()">Xem kết quả</button>
-    <div class="result" id="result_random"></div>
-    <div class="debug" id="debug_random"></div>
-  </div>
-
-  <div class="box">
-    <div class="title">📌 Chế độ Cố định (u)</div>
-    <input type="text" id="md5_fixed" placeholder="Nhập mã MD5...">
-    <br>
-    <button onclick="calculateFixed()">Xem kết quả</button>
-    <div class="result" id="result_fixed"></div>
-    <div class="debug" id="debug_fixed"></div>
+  <div class="md5-container" id="md5box">
+    <div id="bubble">🎲 Đang chờ MD5...</div>
+    <select id="partCount"></select>
   </div>
 
   <script>
-    function calculateRandom() {
-      const md5 = document.getElementById("md5_random").value.trim().toLowerCase();
-      const resultEl = document.getElementById("result_random");
-      const debugEl = document.getElementById("debug_random");
+    const diceMap = { 1: '⚀', 2: '⚁', 3: '⚂', 4: '⚃', 5: '⚄', 6: '⚅' };
+    let lastCopied = '';
+    const container = document.getElementById('md5box');
+    const bubble = document.getElementById('bubble');
+    const select = document.getElementById('partCount');
 
-      if (!/^[0-9a-f]{32}$/.test(md5)) {
-        resultEl.innerText = "❌ Mã MD5 không hợp lệ.";
-        debugEl.innerText = "";
-        return;
-      }
-
-      const start = Math.floor(Math.random() * (md5.length - 10));
-      const length = Math.floor(Math.random() * 5) + 6;
-      const short = md5.substring(start, start + length);
-
-      let value = parseInt(short, 16);
-      const d1 = (value % 6) + 1;
-      const d2 = (Math.floor(value / 6) % 6) + 1;
-      const d3 = (Math.floor(value / 36) % 6) + 1;
-      const sum = d1 + d2 + d3;
-      const result = sum >= 11 ? "🔥" : "❄️ ";
-
-      resultEl.innerText = `${d1}-${d2}-${d3} = ${sum} → ${result}`;
-      debugEl.innerText = `Đoạn dùng: '${short}' (vị trí ${start}, dài ${length})`;
+    for (let i = 3; i <= 18; i++) {
+      const option = document.createElement('option');
+      option.value = i;
+      option.text = i;
+      select.appendChild(option);
     }
 
-    function calculateFixed() {
-      const md5 = document.getElementById("md5_fixed").value.trim().toLowerCase();
-      const resultEl = document.getElementById("result_fixed");
-      const debugEl = document.getElementById("debug_fixed");
+    const soundT = new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_3657b92910.mp3?filename=click-124467.mp3");
+    const soundX = new Audio("https://cdn.pixabay.com/download/audio/2023/03/09/audio_0f0289c1b7.mp3?filename=correct-2-46134.mp3");
+    const soundBao = new Audio("https://cdn.pixabay.com/download/audio/2022/10/03/audio_b1d8f4f854.mp3?filename=retro-arcade-tom-102502.mp3");
 
-      if (!/^[0-9a-f]{32}$/.test(md5)) {
-        resultEl.innerText = "❌ Mã MD5 không hợp lệ.";
-        debugEl.innerText = "";
-        return;
-      }
-
-      const short = md5.substring(0, 32);
-      let value = parseInt(short, 16);
-      const d1 = (value % 6) + 1;
-      const d2 = (Math.floor(value / 6) % 6) + 1;
-      const d3 = (Math.floor(value / 36) % 6) + 1;
-      const sum = d1 + d2 + d3;
-      const result = sum >= 11 ? "🔥 " : "❄️ ";
-
-      resultEl.innerText = `${d1}-${d2}-${d3} = ${sum} → ${result}`;
-      debugEl.innerText = `Đoạn cố định: '${short}' (vị trí 0, dài 8)`;
+    function playSound(result) {
+      if (result.includes("Tài")) soundT.play();
+      else if (result.includes("Xỉu")) soundX.play();
+      else if (result.includes("Bão")) soundBao.play();
     }
+
+    function parseMd5(md5, parts) {
+      const partLength = Math.floor(md5.length / parts);
+      const sliced = [];
+      for (let i = 0; i < parts; i++) {
+        sliced.push(md5.slice(i * partLength, (i + 1) * partLength));
+      }
+      const mapped = sliced.slice(0, 3).map(p => (parseInt(p, 16) % 6) + 1);
+      const total = mapped.reduce((a, b) => a + b, 0);
+      return { dice: mapped, total };
+    }
+
+    function analyze(total, dice) {
+      const count = {};
+      for (const n of dice) count[n] = (count[n] || 0) + 1;
+      if (Object.values(count).includes(3)) return '🪙 Bão';
+      if (total <= 10) return '🔌 Xỉu';
+      return '🔴 Tài';
+    }
+
+    function launchStars(count = 15) {
+      for (let i = 0; i < count; i++) {
+        const star = document.createElement('div');
+        star.className = 'sparkle';
+        star.style.left = `${Math.random() * 100}px`;
+        star.style.top = `${Math.random() * 40}px`;
+        star.style.background = `hsl(${Math.random() * 360}, 100%, 70%)`;
+        container.appendChild(star);
+        setTimeout(() => star.remove(), 1000);
+      }
+    }
+
+    function showPacman() {
+      const pacman = document.createElement('div');
+      pacman.className = 'pacman';
+      pacman.innerText = '🟡👻🟣👻🔌';
+      container.appendChild(pacman);
+      setTimeout(() => pacman.remove(), 5000);
+    }
+
+    async function checkClipboard() {
+      try {
+        const text = await navigator.clipboard.readText();
+        const parts = parseInt(select.value);
+        if (text !== lastCopied && /^[a-fA-F0-9]{32}$/.test(text)) {
+          lastCopied = text;
+          const { dice, total } = parseMd5(text, parts);
+          const result = analyze(total, dice);
+          const icons = dice.map(n => diceMap[n]).join(' ');
+          bubble.innerText = `${icons} - ${result}`;
+
+          if (result.includes('Xỉu')) {
+            container.style.setProperty('--neon-color', '#00f0ff');
+          } else if (result.includes('Tài')) {
+            container.style.setProperty('--neon-color', '#ff0055');
+          } else {
+            container.style.setProperty('--neon-color', 'gold');
+          }
+
+          launchStars(20);
+          showPacman();
+          playSound(result);
+        }
+      } catch (e) {
+        console.error('Clipboard error:', e);
+      }
+    }
+
+    select.addEventListener('change', () => {
+      if (lastCopied && /^[a-fA-F0-9]{32}$/.test(lastCopied)) {
+        const parts = parseInt(select.value);
+        const { dice } = parseMd5(lastCopied, parts);
+        bubble.innerText = dice.map(n => diceMap[n]).join(' ');
+      }
+    });
+
+    setInterval(checkClipboard, 1500);
+
+    // Drag support
+    let offsetX, offsetY, isDragging = false;
+    container.addEventListener('mousedown', function(e) {
+        isDragging = true;
+        offsetX = e.clientX - container.getBoundingClientRect().left;
+        offsetY = e.clientY - container.getBoundingClientRect().top;
+    });
+    document.addEventListener('mousemove', function(e) {
+        if (isDragging) {
+            container.style.left = (e.clientX - offsetX) + 'px';
+            container.style.top = (e.clientY - offsetY) + 'px';
+            container.style.right = 'auto';
+            container.style.bottom = 'auto';
+        }
+    });
+    document.addEventListener('mouseup', function() {
+        isDragging = false;
+    });
   </script>
 </body>
 </html>
