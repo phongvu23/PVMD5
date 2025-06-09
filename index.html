@@ -72,7 +72,7 @@
         return;
       }
 
-      const short = md5.substring(0, 8);
+      const short = md5.substring(0, 10);
       let value = parseInt(short, 16);
       const d1 = (value % 6) + 1;
       const d2 = (Math.floor(value / 6) % 6) + 1;
@@ -81,7 +81,7 @@
       const result = sum >= 11 ? "🔥 " : "❄️ ";
 
       resultEl.innerText = `${d1}-${d2}-${d3} = ${sum} → ${result}`;
-      debugEl.innerText = `Đoạn cố định: '${short}' (vị trí 0, dài 8)`;
+      debugEl.innerText = `Đoạn cố định: '${short}' (vị trí 0, dài 10)`;
     }
   </script>
 </body>
