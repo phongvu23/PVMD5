@@ -78,10 +78,10 @@
       const d2 = (Math.floor(value / 6) % 6) + 1;
       const d3 = (Math.floor(value / 36) % 6) + 1;
       const sum = d1 + d2 + d3;
-      const result = sum >= 11 ? "🔥 " : "❄️ ";
+      const result = sum >= 11 ? "🔵Xỉu nhé " : "🔴Tài nhé ";
 
       resultEl.innerText = `${d1}-${d2}-${d3} = ${sum} → ${result}`;
-      debugEl.innerText = `Đoạn cố định: '${short}' (vị trí 0, dài 10)`;
+      debugEl.innerText = `Đoạn cố định: '${short}' (vị trí 1, dài 15)`;
     }
   </script>
 </body>
