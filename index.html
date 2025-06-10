@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>MD5 (Tham khảo)</title>
+  <title>MD5 (BY SUNEO)</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -53,7 +53,6 @@
       color: #555;
     }
 
-    /* Tài theme */
     .tai-theme {
       background: #ffe5e5;
       color: #900;
@@ -72,7 +71,6 @@
       border: 1px solid #faa;
     }
 
-    /* Xỉu theme */
     .xiu-theme {
       background: #e5f0ff;
       color: #003366;
@@ -93,7 +91,7 @@
   </style>
 </head>
 <body>
-  <h1>🎲 Dự đoán MD5 By Suneo</h1>
+  <h1>Dự đoán MD5 By Suneo</h1>
   <div class="box">
     <div class="title">
       Nhập chuỗi MD5:
@@ -101,7 +99,7 @@
     </div>
     <input type="text" id="md5_fixed" placeholder=" Chúc bạn may mắn " />
     
-    <div class="title">Vị trí cắt chuỗi MD5 (start, end):</div>
+    <div class="title">...</div>
     <input type="number" id="start_index" value="1" min="0" max="31" style="width: 80px;" />
     <input type="number" id="end_index" value="15" min="1" max="32" style="width: 80px;" />
     
@@ -143,27 +141,22 @@
       const result = sum >= 11 ? "🔴 Tài nhé" : "🔵 Xỉu nhé";
 
       resultEl.innerText = `${d1}-${d2}-${d3} = ${sum} → ${result}`;
-      debugEl.innerText = `Đoạn lấy: '${short}' (vị trí ${start}, dài ${end - start})`;
+      debugEl.innerText = `Hãy giữ bình tĩnh : '${short}' (vị trí ${start}, dài ${end - start})`;
 
       document.body.classList.remove("tai-theme", "xiu-theme");
       document.body.classList.add(sum >= 11 ? "tai-theme" : "xiu-theme");
 
-      // Tự động focus lại sau 3 giây
-      setTimeout(() => {
-        md5Input.focus();
-      }, 3000);
+      // ❌ Đã xóa focus lại sau khi xử lý
     }
 
-    // Gắn sự kiện tính tự động khi người dùng nhập
     document.addEventListener("DOMContentLoaded", () => {
       const input = document.getElementById("md5_fixed");
       input.addEventListener("input", () => {
         calculateFixed();
       });
-      input.focus(); // focus ngay từ đầu
+      // ❌ Đã xóa auto-focus khi trang load
     });
 
-    // Cập nhật đồng hồ
     function updateClock() {
       const now = new Date();
       const dateStr = now.toLocaleDateString('vi-VN');
