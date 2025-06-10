@@ -95,7 +95,9 @@
 <body>
   <h1>🎲 Dự đoán MD5 By Suneo</h1>
   <div class="box">
-    <div class="title">Nhập chuỗi MD5:</div>
+    <div class="title">
+      Nhập chuỗi MD5: <span id="clock" style="font-weight: normal; font-size: 16px; color: #555;"></span>
+    </div>
     <input type="text" id="md5_fixed" placeholder=" Chúc bạn may mắn " />
     
     <div class="title">Vị trí cắt chuỗi MD5 (start, end):</div>
@@ -120,12 +122,14 @@
       if (!/^[0-9a-f]{32}$/.test(md5)) {
         resultEl.innerText = "❌ Mã MD5 không hợp lệ.";
         debugEl.innerText = "";
+        document.body.classList.remove("tai-theme", "xiu-theme");
         return;
       }
 
       if (start < 0 || end > 32 || start >= end) {
         resultEl.innerText = "⚠️ Vị trí cắt không hợp lệ.";
         debugEl.innerText = "";
+        document.body.classList.remove("tai-theme", "xiu-theme");
         return;
       }
 
@@ -140,19 +144,25 @@
       resultEl.innerText = `${d1}-${d2}-${d3} = ${sum} → ${result}`;
       debugEl.innerText = `Đoạn lấy: '${short}' (vị trí ${start}, dài ${end - start})`;
 
-      // Xóa class cũ
       document.body.classList.remove("tai-theme", "xiu-theme");
-
-      // Gán theme mới theo kết quả
-      if (sum >= 11) {
-        document.body.classList.add("tai-theme");
-      } else {
-        document.body.classList.add("xiu-theme");
-      }
-
-      // Xóa MD5 sau khi bấm
-      md5Input.value = "";
+      document.body.classList.add(sum >= 11 ? "tai-theme" : "xiu-theme");
     }
+
+    // Gắn sự kiện tự tính khi người dùng nhập
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("md5_fixed").addEventListener("input", () => {
+        calculateFixed();
+      });
+    });
+
+    // Cập nhật đồng hồ
+    function updateClock() {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('vi-VN', { hour12: false });
+      document.getElementById("clock").innerText = timeStr;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
   </script>
 </body>
 </html>
