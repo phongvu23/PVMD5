@@ -7,20 +7,26 @@
     body {
       font-family: Arial, sans-serif;
       background: #f8f8f8;
-      transition: background 0.5s ease;
+      color: #000;
+      transition: background 0.5s ease, color 0.5s ease;
       padding: 40px;
       text-align: center;
     }
-    input {
+    input, button {
       padding: 8px;
-      width: 300px;
       font-size: 16px;
       margin: 5px 0;
+      transition: background 0.5s ease, color 0.5s ease, border 0.5s ease;
+    }
+    input {
+      width: 300px;
     }
     button {
       padding: 8px 16px;
-      font-size: 16px;
       margin: 5px;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
     }
     .box {
       background: #fff;
@@ -29,6 +35,7 @@
       margin: 20px auto;
       width: 500px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      transition: background 0.5s ease, color 0.5s ease;
     }
     .title {
       font-size: 18px;
@@ -39,12 +46,49 @@
       margin-top: 12px;
       font-size: 18px;
       font-weight: bold;
-      color: #222;
     }
     .debug {
       margin-top: 6px;
       font-size: 14px;
-      color: #777;
+      color: #555;
+    }
+
+    /* Tài theme */
+    .tai-theme {
+      background: #ffe5e5;
+      color: #900;
+    }
+    .tai-theme .box {
+      background: #ffdddd;
+      color: #900;
+    }
+    .tai-theme button {
+      background: #ff9999;
+      color: #600;
+    }
+    .tai-theme input {
+      background: #fff0f0;
+      color: #600;
+      border: 1px solid #faa;
+    }
+
+    /* Xỉu theme */
+    .xiu-theme {
+      background: #e5f0ff;
+      color: #003366;
+    }
+    .xiu-theme .box {
+      background: #dceeff;
+      color: #003366;
+    }
+    .xiu-theme button {
+      background: #99ccff;
+      color: #002244;
+    }
+    .xiu-theme input {
+      background: #eef7ff;
+      color: #002244;
+      border: 1px solid #a9d4ff;
     }
   </style>
 </head>
@@ -96,11 +140,14 @@
       resultEl.innerText = `${d1}-${d2}-${d3} = ${sum} → ${result}`;
       debugEl.innerText = `Đoạn lấy: '${short}' (vị trí ${start}, dài ${end - start})`;
 
-      // Đổi màu nền theo kết quả
+      // Xóa class cũ
+      document.body.classList.remove("tai-theme", "xiu-theme");
+
+      // Gán theme mới theo kết quả
       if (sum >= 11) {
-        document.body.style.background = "#ffe5e5"; // đỏ nhạt
+        document.body.classList.add("tai-theme");
       } else {
-        document.body.style.background = "#e5f0ff"; // xanh nhạt
+        document.body.classList.add("xiu-theme");
       }
 
       // Xóa MD5 sau khi bấm
