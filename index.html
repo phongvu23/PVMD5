@@ -14,10 +14,15 @@
   </style>
 </head>
 <body>
-  <h1>🎲 Dự đoán MD5 (Tham khảo)</h1>
+  <h1>🎲 Dự đoán MD5 (Tài/Xỉu)</h1>
   <div class="box">
     <div class="title">Nhập chuỗi MD5:</div>
     <input type="text" id="md5_fixed" placeholder="vd: e4d909c290d0fb1ca068ffaddf22cbd0" />
+    
+    <div class="title">Vị trí cắt chuỗi MD5 (start, end):</div>
+    <input type="number" id="start_index" value="1" min="0" max="31" style="width: 80px;" />
+    <input type="number" id="end_index" value="15" min="1" max="32" style="width: 80px;" />
+    
     <br>
     <button onclick="calculateFixed()">Dự đoán</button>
     <div id="result_fixed" class="result"></div>
@@ -26,9 +31,12 @@
 
   <script>
     function calculateFixed() {
-      const md5 = document.getElementById("md5_fixed").value.trim().toLowerCase();
+      const md5Input = document.getElementById("md5_fixed");
+      const md5 = md5Input.value.trim().toLowerCase();
       const resultEl = document.getElementById("result_fixed");
       const debugEl = document.getElementById("debug_fixed");
+      const start = parseInt(document.getElementById("start_index").value);
+      const end = parseInt(document.getElementById("end_index").value);
 
       if (!/^[0-9a-f]{32}$/.test(md5)) {
         resultEl.innerText = "❌ Mã MD5 không hợp lệ.";
@@ -36,7 +44,13 @@
         return;
       }
 
-      const short = md5.substring(1, 15);
+      if (start < 0 || end > 32 || start >= end) {
+        resultEl.innerText = "⚠️ Vị trí cắt không hợp lệ.";
+        debugEl.innerText = "";
+        return;
+      }
+
+      const short = md5.substring(start, end);
       let value = parseInt(short, 16);
       const d1 = (value % 6) + 1;
       const d2 = (Math.floor(value / 6) % 6) + 1;
@@ -45,9 +59,11 @@
       const result = sum >= 11 ? "🔵 Xỉu nhé" : "🔴 Tài nhé";
 
       resultEl.innerText = `${d1}-${d2}-${d3} = ${sum} → ${result}`;
-      debugEl.innerText = `Đoạn cố định: '${short}' (vị trí 1, dài 15)`;
+      debugEl.innerText = `Đoạn lấy: '${short}' (vị trí ${start}, dài ${end - start})`;
+
+      // Xóa MD5 sau khi bấm
+      md5Input.value = "";
     }
   </script>
 </body>
 </html>
-
