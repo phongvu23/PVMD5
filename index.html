@@ -96,7 +96,8 @@
   <h1>🎲 Dự đoán MD5 By Suneo</h1>
   <div class="box">
     <div class="title">
-      Nhập chuỗi MD5: <span id="clock" style="font-weight: normal; font-size: 16px; color: #555;"></span>
+      Nhập chuỗi MD5:
+      <span id="clock" style="font-weight: normal; font-size: 16px; color: #555; display: block; margin-top: 4px;"></span>
     </div>
     <input type="text" id="md5_fixed" placeholder=" Chúc bạn may mắn " />
     
@@ -146,20 +147,28 @@
 
       document.body.classList.remove("tai-theme", "xiu-theme");
       document.body.classList.add(sum >= 11 ? "tai-theme" : "xiu-theme");
+
+      // Tự động focus lại sau 3 giây
+      setTimeout(() => {
+        md5Input.focus();
+      }, 3000);
     }
 
-    // Gắn sự kiện tự tính khi người dùng nhập
+    // Gắn sự kiện tính tự động khi người dùng nhập
     document.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("md5_fixed").addEventListener("input", () => {
+      const input = document.getElementById("md5_fixed");
+      input.addEventListener("input", () => {
         calculateFixed();
       });
+      input.focus(); // focus ngay từ đầu
     });
 
     // Cập nhật đồng hồ
     function updateClock() {
       const now = new Date();
+      const dateStr = now.toLocaleDateString('vi-VN');
       const timeStr = now.toLocaleTimeString('vi-VN', { hour12: false });
-      document.getElementById("clock").innerText = timeStr;
+      document.getElementById("clock").innerText = `${dateStr} ${timeStr}`;
     }
     setInterval(updateClock, 1000);
     updateClock();
