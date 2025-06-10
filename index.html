@@ -4,13 +4,48 @@
   <meta charset="UTF-8">
   <title>MD5 (Tham khảo)</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f8f8f8; padding: 40px; text-align: center; }
-    input { padding: 8px; width: 300px; font-size: 16px; margin: 5px 0; }
-    button { padding: 8px 16px; font-size: 16px; margin: 5px; }
-    .box { background: #fff; border-radius: 8px; padding: 20px; margin: 20px auto; width: 500px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    .title { font-size: 18px; font-weight: bold; margin-bottom: 10px; }
-    .result { margin-top: 12px; font-size: 18px; font-weight: bold; color: #222; }
-    .debug { margin-top: 6px; font-size: 14px; color: #777; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f8f8f8;
+      transition: background 0.5s ease;
+      padding: 40px;
+      text-align: center;
+    }
+    input {
+      padding: 8px;
+      width: 300px;
+      font-size: 16px;
+      margin: 5px 0;
+    }
+    button {
+      padding: 8px 16px;
+      font-size: 16px;
+      margin: 5px;
+    }
+    .box {
+      background: #fff;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px auto;
+      width: 500px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .result {
+      margin-top: 12px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #222;
+    }
+    .debug {
+      margin-top: 6px;
+      font-size: 14px;
+      color: #777;
+    }
   </style>
 </head>
 <body>
@@ -56,10 +91,17 @@
       const d2 = (Math.floor(value / 6) % 6) + 1;
       const d3 = (Math.floor(value / 36) % 6) + 1;
       const sum = d1 + d2 + d3;
-      const result = sum >= 11 ? "🔵 Xỉu nhé" : "🔴 Tài nhé";
+      const result = sum >= 11 ? "🔴 Tài nhé" : "🔵 Xỉu nhé";
 
       resultEl.innerText = `${d1}-${d2}-${d3} = ${sum} → ${result}`;
       debugEl.innerText = `Đoạn lấy: '${short}' (vị trí ${start}, dài ${end - start})`;
+
+      // Đổi màu nền theo kết quả
+      if (sum >= 11) {
+        document.body.style.background = "#ffe5e5"; // đỏ nhạt
+      } else {
+        document.body.style.background = "#e5f0ff"; // xanh nhạt
+      }
 
       // Xóa MD5 sau khi bấm
       md5Input.value = "";
