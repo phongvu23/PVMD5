@@ -16,52 +16,7 @@
 <body>
   <h1>🎲(Tham khảo)</h1>
 
-  <div class="box">
-    <div class="title">🔁 Chế độ Random (mỗi lần đoạn MD5 sẽ khác)</div>
-    <input type="text" id="md5_random" placeholder="Nhập mã MD5...">
-    <br>
-    <button onclick="calculateRandom()">Xem kết quả</button>
-    <div class="result" id="result_random"></div>
-    <div class="debug" id="debug_random"></div>
-  </div>
-
-  <div class="box">
-    <div class="title">📌 Chế độ Cố định (dùng 8 ký tự đầu)</div>
-    <input type="text" id="md5_fixed" placeholder="Nhập mã MD5...">
-    <br>
-    <button onclick="calculateFixed()">Xem kết quả</button>
-    <div class="result" id="result_fixed"></div>
-    <div class="debug" id="debug_fixed"></div>
-  </div>
-
-  <script>
-    function calculateRandom() {
-      const md5 = document.getElementById("md5_random").value.trim().toLowerCase();
-      const resultEl = document.getElementById("result_random");
-      const debugEl = document.getElementById("debug_random");
-
-      if (!/^[0-9a-f]{32}$/.test(md5)) {
-        resultEl.innerText = "❌ Mã MD5 không hợp lệ.";
-        debugEl.innerText = "";
-        return;
-      }
-
-      const start = Math.floor(Math.random() * (md5.length - 10));
-      const length = Math.floor(Math.random() * 5) + 6;
-      const short = md5.substring(start, start + length);
-
-      let value = parseInt(short, 16);
-      const d1 = (value % 6) + 1;
-      const d2 = (Math.floor(value / 6) % 6) + 1;
-      const d3 = (Math.floor(value / 36) % 6) + 1;
-      const sum = d1 + d2 + d3;
-      const result = sum >= 11 ? "🔥" : "❄️ ";
-
-      resultEl.innerText = `${d1}-${d2}-${d3} = ${sum} → ${result}`;
-      debugEl.innerText = `Đoạn dùng: '${short}' (vị trí ${start}, dài ${length})`;
-    }
-
-    function calculateFixed() {
+   function calculateFixed() {
       const md5 = document.getElementById("md5_fixed").value.trim().toLowerCase();
       const resultEl = document.getElementById("result_fixed");
       const debugEl = document.getElementById("debug_fixed");
