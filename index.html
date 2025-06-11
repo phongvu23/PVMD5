@@ -8,15 +8,15 @@
       font-family: Arial, sans-serif;
       background: #f8f8f8;
       color: #000;
+      transition: background 0.5s ease, color 0.5s ease;
       padding: 40px;
       text-align: center;
-      transition: background 0.5s ease, color 0.5s ease;
     }
     input, button {
       padding: 8px;
       font-size: 16px;
       margin: 5px 4px;
-      transition: all 0.3s ease;
+      transition: background 0.5s ease, color 0.5s ease, border 0.5s ease;
     }
     input {
       width: 300px;
@@ -34,6 +34,7 @@
       margin: 20px auto;
       width: 500px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      transition: background 0.5s ease, color 0.5s ease;
     }
     .title {
       font-size: 18px;
@@ -57,13 +58,34 @@
     }
     .tai-theme .box {
       background: #ffdddd;
+      color: #900;
     }
+    .tai-theme button {
+      background: #ff9999;
+      color: #600;
+    }
+    .tai-theme input {
+      background: #fff0f0;
+      color: #600;
+      border: 1px solid #faa;
+    }
+
     .xiu-theme {
       background: #e5f0ff;
       color: #003366;
     }
     .xiu-theme .box {
       background: #dceeff;
+      color: #003366;
+    }
+    .xiu-theme button {
+      background: #99ccff;
+      color: #002244;
+    }
+    .xiu-theme input {
+      background: #eef7ff;
+      color: #002244;
+      border: 1px solid #a9d4ff;
     }
   </style>
 </head>
@@ -76,20 +98,14 @@
     </div>
     <input type="text" id="md5_fixed" placeholder=" Chúc bạn may mắn " />
 
-    <div class="title">Vị trí cắt chuỗi MD5 (start, end):</div>
+    <div class="title">Vị trí cắt (0-32):</div>
     <input type="number" id="start_index" min="0" max="31" style="width: 80px;" />
     <input type="number" id="end_index" min="1" max="32" style="width: 80px;" />
-    <button onclick="saveCutDefaults()">💾 Lưu mặc định</button>
-
+    <button onclick="saveCutDefaults()">💾 Lưu vị trí </button>
+    
     <br><br>
     <button onclick="calculateFixed()">🎲 Dự đoán</button>
     <button onclick="location.reload()">🔄 Làm mới</button>
-
-    <div class="title" style="margin-top: 20px;">
-      ⏱️ Tự động làm mới sau
-      <input type="number" id="refresh_delay" value="2" min="1" max="999" style="width: 60px;"> giây
-      <button onclick="toggleAutoRefresh()">⚙️ Bật/Tắt</button>
-    </div>
 
     <div id="result_fixed" class="result"></div>
     <div id="debug_fixed" class="debug"></div>
@@ -127,7 +143,7 @@
       const result = sum >= 11 ? "🔴 Tài nhé" : "🔵 Xỉu nhé";
 
       resultEl.innerText = `${d1}-${d2}-${d3} = ${sum} → ${result}`;
-      debugEl.innerText = `Chuỗi con: '${short}' (vị trí ${start}, dài ${end - start})`;
+      debugEl.innerText = `Hãy giữ bình tĩnh: '${short}' (vị trí ${start}, dài ${end - start})`;
 
       document.body.classList.remove("tai-theme", "xiu-theme");
       document.body.classList.add(sum >= 11 ? "tai-theme" : "xiu-theme");
@@ -138,6 +154,13 @@
       const dateStr = now.toLocaleDateString('vi-VN');
       const timeStr = now.toLocaleTimeString('vi-VN', { hour12: false });
       document.getElementById("clock").innerText = `${dateStr} ${timeStr}`;
+    }
+
+    function loadCutDefaults() {
+      const savedStart = localStorage.getItem('md5_start_index');
+      const savedEnd = localStorage.getItem('md5_end_index');
+      document.getElementById("start_index").value = savedStart !== null ? savedStart : 1;
+      document.getElementById("end_index").value = savedEnd !== null ? savedEnd : 7;
     }
 
     function saveCutDefaults() {
@@ -152,13 +175,6 @@
       }
     }
 
-    function loadCutDefaults() {
-      const savedStart = localStorage.getItem('md5_start_index');
-      const savedEnd = localStorage.getItem('md5_end_index');
-      document.getElementById("start_index").value = savedStart ?? 1;
-      document.getElementById("end_index").value = savedEnd ?? 7;
-    }
-
     async function readClipboardAndCalculate() {
       try {
         const text = await navigator.clipboard.readText();
@@ -167,27 +183,7 @@
           calculateFixed();
         }
       } catch (err) {
-        console.warn("Không thể đọc clipboard:", err);
-      }
-    }
-
-    // 🔁 TỰ ĐỘNG LÀM MỚI TRANG
-    let autoRefreshTimer = null;
-    function toggleAutoRefresh() {
-      if (autoRefreshTimer) {
-        clearTimeout(autoRefreshTimer);
-        autoRefreshTimer = null;
-        alert("❌ Đã tắt tự động làm mới.");
-      } else {
-        const seconds = parseInt(document.getElementById("refresh_delay").value);
-        if (!isNaN(seconds) && seconds > 0) {
-          autoRefreshTimer = setTimeout(() => {
-            location.reload();
-          }, seconds * 1000);
-          alert("✅ Trang sẽ tự động làm mới sau " + seconds + " giây.");
-        } else {
-          alert("⚠️ Thời gian không hợp lệ.");
-        }
+        console.warn("Không đọc được clipboard:", err);
       }
     }
 
