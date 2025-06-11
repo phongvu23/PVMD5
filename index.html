@@ -101,10 +101,12 @@
     
     <div class="title">Vị trí cắt chuỗi MD5 (start, end):</div>
     <input type="number" id="start_index" value="1" min="0" max="31" style="width: 80px;" />
-    <input type="number" id="end_index" value="7" min="1" max="32" style="width: 80px;" />
+    <input type="number" id="end_index" value="15" min="1" max="32" style="width: 80px;" />
     
     <br>
     <button onclick="calculateFixed()">Dự đoán</button>
+    <button onclick="location.reload()">🔄 Làm mới</button>
+    
     <div id="result_fixed" class="result"></div>
     <div id="debug_fixed" class="debug"></div>
   </div>
@@ -170,9 +172,8 @@
       document.getElementById("md5_fixed").addEventListener("input", calculateFixed);
       updateClock();
       setInterval(updateClock, 1000);
-      setTimeout(readClipboardAndCalculate, 300); // đọc clipboard sau 0.3s
+      setTimeout(readClipboardAndCalculate, 300);
     });
   </script>
 </body>
 </html>
-
