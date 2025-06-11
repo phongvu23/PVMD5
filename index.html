@@ -99,7 +99,7 @@
     </div>
     <input type="text" id="md5_fixed" placeholder=" Chúc bạn may mắn " />
     
-    <div class="title">...</div>
+    <div class="title">Vị trí cắt chuỗi MD5 (start, end):</div>
     <input type="number" id="start_index" value="1" min="0" max="31" style="width: 80px;" />
     <input type="number" id="end_index" value="15" min="1" max="32" style="width: 80px;" />
     
@@ -145,17 +145,19 @@
 
       document.body.classList.remove("tai-theme", "xiu-theme");
       document.body.classList.add(sum >= 11 ? "tai-theme" : "xiu-theme");
-
-      // ❌ Đã xóa focus lại sau khi xử lý
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
-      const input = document.getElementById("md5_fixed");
-      input.addEventListener("input", () => {
-        calculateFixed();
-      });
-      // ❌ Đã xóa auto-focus khi trang load
-    });
+    async function readClipboardAndCalculate() {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (/^[0-9a-f]{32}$/i.test(text.trim())) {
+          document.getElementById("md5_fixed").value = text.trim();
+          calculateFixed();
+        }
+      } catch (err) {
+        console.warn("Không đọc được clipboard:", err);
+      }
+    }
 
     function updateClock() {
       const now = new Date();
@@ -163,8 +165,14 @@
       const timeStr = now.toLocaleTimeString('vi-VN', { hour12: false });
       document.getElementById("clock").innerText = `${dateStr} ${timeStr}`;
     }
-    setInterval(updateClock, 1000);
-    updateClock();
+
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("md5_fixed").addEventListener("input", calculateFixed);
+      updateClock();
+      setInterval(updateClock, 1000);
+      setTimeout(readClipboardAndCalculate, 300); // đọc clipboard sau 0.3s
+    });
   </script>
 </body>
 </html>
+
