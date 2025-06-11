@@ -15,15 +15,14 @@
     input, button {
       padding: 8px;
       font-size: 16px;
-      margin: 5px 0;
+      margin: 5px 4px;
       transition: background 0.5s ease, color 0.5s ease, border 0.5s ease;
     }
     input {
       width: 300px;
     }
     button {
-      padding: 8px 16px;
-      margin: 5px;
+      padding: 8px 12px;
       cursor: pointer;
       border: none;
       border-radius: 4px;
@@ -98,15 +97,16 @@
       <span id="clock" style="font-weight: normal; font-size: 16px; color: #555; display: block; margin-top: 4px;"></span>
     </div>
     <input type="text" id="md5_fixed" placeholder=" Chúc bạn may mắn " />
-    
+
     <div class="title">Vị trí cắt chuỗi MD5 (start, end):</div>
-    <input type="number" id="start_index" value="1" min="0" max="31" style="width: 80px;" />
-    <input type="number" id="end_index" value="7" min="1" max="32" style="width: 80px;" />
+    <input type="number" id="start_index" min="0" max="31" style="width: 80px;" />
+    <input type="number" id="end_index" min="1" max="32" style="width: 80px;" />
+    <button onclick="saveCutDefaults()">💾 Lưu mặc định</button>
     
-    <br>
-    <button onclick="calculateFixed()">Dự đoán</button>
+    <br><br>
+    <button onclick="calculateFixed()">🎲 Dự đoán</button>
     <button onclick="location.reload()">🔄 Làm mới</button>
-    
+
     <div id="result_fixed" class="result"></div>
     <div id="debug_fixed" class="debug"></div>
   </div>
@@ -143,10 +143,36 @@
       const result = sum >= 11 ? "🔴 Tài nhé" : "🔵 Xỉu nhé";
 
       resultEl.innerText = `${d1}-${d2}-${d3} = ${sum} → ${result}`;
-      debugEl.innerText = `Hãy giữ bình tĩnh : '${short}' (vị trí ${start}, dài ${end - start})`;
+      debugEl.innerText = `Hãy giữ bình tĩnh: '${short}' (vị trí ${start}, dài ${end - start})`;
 
       document.body.classList.remove("tai-theme", "xiu-theme");
       document.body.classList.add(sum >= 11 ? "tai-theme" : "xiu-theme");
+    }
+
+    function updateClock() {
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('vi-VN');
+      const timeStr = now.toLocaleTimeString('vi-VN', { hour12: false });
+      document.getElementById("clock").innerText = `${dateStr} ${timeStr}`;
+    }
+
+    function loadCutDefaults() {
+      const savedStart = localStorage.getItem('md5_start_index');
+      const savedEnd = localStorage.getItem('md5_end_index');
+      document.getElementById("start_index").value = savedStart !== null ? savedStart : 1;
+      document.getElementById("end_index").value = savedEnd !== null ? savedEnd : 7;
+    }
+
+    function saveCutDefaults() {
+      const start = document.getElementById("start_index").value;
+      const end = document.getElementById("end_index").value;
+      if (start >= 0 && end <= 32 && parseInt(start) < parseInt(end)) {
+        localStorage.setItem('md5_start_index', start);
+        localStorage.setItem('md5_end_index', end);
+        alert("✅ Đã lưu vị trí cắt mặc định!");
+      } else {
+        alert("⚠️ Vị trí không hợp lệ, không thể lưu.");
+      }
     }
 
     async function readClipboardAndCalculate() {
@@ -161,17 +187,12 @@
       }
     }
 
-    function updateClock() {
-      const now = new Date();
-      const dateStr = now.toLocaleDateString('vi-VN');
-      const timeStr = now.toLocaleTimeString('vi-VN', { hour12: false });
-      document.getElementById("clock").innerText = `${dateStr} ${timeStr}`;
-    }
-
     document.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("md5_fixed").addEventListener("input", calculateFixed);
+      loadCutDefaults();
       updateClock();
       setInterval(updateClock, 1000);
+
+      document.getElementById("md5_fixed").addEventListener("input", calculateFixed);
       setTimeout(readClipboardAndCalculate, 300);
     });
   </script>
