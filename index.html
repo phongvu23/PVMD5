@@ -106,12 +106,21 @@
     <br><br>
     <button onclick="calculateFixed()">🎲 Dự đoán</button>
     <button onclick="location.reload()">🔄 Làm mới</button>
+    <button onclick="toggleResult()">👁️‍🗨️ Ẩn/Hiện kết quả</button> <!-- Nút ẩn/hiện kết quả -->
 
     <div id="result_fixed" class="result"></div>
     <div id="debug_fixed" class="debug"></div>
   </div>
 
   <script>
+    let resultVisible = true;
+
+    function toggleResult() {
+      const resultEl = document.getElementById("result_fixed");
+      resultVisible = !resultVisible;
+      resultEl.style.display = resultVisible ? "block" : "none"; // Ẩn/hiện kết quả
+    }
+
     function calculateFixed() {
       const md5Input = document.getElementById("md5_fixed");
       const md5 = md5Input.value.trim().toLowerCase();
