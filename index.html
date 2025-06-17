@@ -140,7 +140,7 @@
       const d2 = (Math.floor(value / 6) % 6) + 1;
       const d3 = (Math.floor(value / 36) % 6) + 1;
       const sum = d1 + d2 + d3;
-      const result = sum >= 11 ? "🔴 Tài nhé" : "🔵 Xỉu nhé";
+      const result = sum >= 11 ? "🔵 Xỉu nhé" : "🔴 Tài nhé";
 
       resultEl.innerText = `${d1}-${d2}-${d3} = ${sum} → ${result}`;
       debugEl.innerText = `Hãy giữ bình tĩnh: '${short}' (vị trí ${start}, dài ${end - start})`;
@@ -160,7 +160,7 @@
       const savedStart = localStorage.getItem('md5_start_index');
       const savedEnd = localStorage.getItem('md5_end_index');
       document.getElementById("start_index").value = savedStart !== null ? savedStart : 1;
-      document.getElementById("end_index").value = savedEnd !== null ? savedEnd : 7;
+      document.getElementById("end_index").value = savedEnd !== null ? savedEnd : 15;
     }
 
     function saveCutDefaults() {
