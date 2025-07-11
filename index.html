@@ -48,13 +48,16 @@
       return dice;
     }
 
-    function getSuggestionsFromDice(dice) {
+    function getCombinedSuggestions(auto, fixed) {
+      const all = auto.concat(fixed);
       const pairs = [];
-      for (let i = 0; i < dice.length; i++) {
-        for (let j = i; j < dice.length; j++) {
-          pairs.push(`${dice[i]} – ${dice[j]}`);
+
+      for (let i = 0; i < all.length; i++) {
+        for (let j = i; j < all.length; j++) {
+          pairs.push(`${all[i]} – ${all[j]}`);
         }
       }
+
       return pairs.slice(0, 3);
     }
 
@@ -66,13 +69,13 @@
       const resultAuto = hexToDiceCustom(hex, 'auto');
       const resultFixed = hexToDiceCustom(hex, 'fixed');
 
-      const suggestionsFromFixed = getSuggestionsFromDice(resultFixed);
+      const combinedSuggestions = getCombinedSuggestions(resultAuto, resultFixed);
 
       document.getElementById("result").textContent =
         `🧠 Auto (chia đều): [${resultAuto.join(', ')}]\n` +
         `🧱 Fixed (7–7–6): [${resultFixed.join(', ')}]\n\n` +
-        `📟 Gợi ý từ kết quả Fixed:\n` +
-        suggestionsFromFixed.map(s => `👉 ${s}`).join('\n');
+        `🎯 Gợi ý kết hợp cả hai:\n` +
+        combinedSuggestions.map(s => `👉 ${s}`).join('\n');
 
       hexInput.value = ""; // 🔥 Xóa ô nhập sau khi xử lý
     }
