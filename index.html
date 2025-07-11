@@ -48,6 +48,13 @@
       return dice;
     }
 
+    function shuffleArray(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+    }
+
     function getCombinedSuggestions(auto, fixed) {
       const all = auto.concat(fixed);
       const pairs = [];
@@ -58,7 +65,8 @@
         }
       }
 
-      return pairs.slice(0, 3);
+      shuffleArray(pairs); // 🔀 Xáo trộn danh sách cặp
+      return pairs.slice(0, 3); // ✅ Trả về 3 cặp ngẫu nhiên
     }
 
     function convertHexToDice() {
@@ -74,7 +82,7 @@
       document.getElementById("result").textContent =
         `🧠 Auto (chia đều): [${resultAuto.join(', ')}]\n` +
         `🧱 Fixed (7–7–6): [${resultFixed.join(', ')}]\n\n` +
-        `🎯 Gợi ý kết hợp cả hai:\n` +
+        `🎯 Gợi ý kết hợp ngẫu nhiên:\n` +
         combinedSuggestions.map(s => `👉 ${s}`).join('\n');
 
       hexInput.value = ""; // 🔥 Xóa ô nhập sau khi xử lý
