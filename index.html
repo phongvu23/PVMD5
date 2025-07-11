@@ -48,6 +48,23 @@
       return dice;
     }
 
+    function getSuggestions(dice) {
+      const pairs = [];
+
+      for (let i = 0; i < dice.length; i++) {
+        for (let j = 0; j < dice.length; j++) {
+          if (i <= j) {
+            pairs.push(`${dice[i]} – ${dice[j]}`);
+          }
+        }
+      }
+
+      // Trộn ngẫu nhiên nếu muốn đa dạng
+      // pairs.sort(() => Math.random() - 0.5);
+
+      return pairs.slice(0, 3);
+    }
+
     function convertHexToDice() {
       const hexInput = document.getElementById("hexInput");
       const hex = hexInput.value.trim();
@@ -56,9 +73,13 @@
       const resultAuto = hexToDiceCustom(hex, 'auto');
       const resultFixed = hexToDiceCustom(hex, 'fixed');
 
+      const suggestions = getSuggestions(resultAuto);
+
       document.getElementById("result").textContent =
         `🧠 Auto (chia đều): [${resultAuto.join(', ')}]\n` +
-        `🧱 Fixed (7–7–6): [${resultFixed.join(', ')}]`;
+        `🧱 Fixed (7–7–6): [${resultFixed.join(', ')}]\n\n` +
+        `🧩 Gợi ý cặp số (có thể lặp hoặc không):\n` +
+        suggestions.map(s => `👉 ${s}`).join('\n');
 
       hexInput.value = ""; // 🔥 Xóa ô nhập sau khi xử lý
     }
