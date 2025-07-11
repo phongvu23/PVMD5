@@ -5,21 +5,15 @@
   <title>Hex to Dice</title>
   <style>
     body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; }
-    input, select, button { margin-top: 10px; padding: 8px; width: 100%; }
-    .result { margin-top: 20px; font-size: 1.2em; font-weight: bold; }
+    input, button { margin-top: 10px; padding: 8px; width: 100%; }
+    .result { margin-top: 20px; font-size: 1.2em; font-weight: bold; white-space: pre-line; }
   </style>
 </head>
 <body>
   <h2>🎲 Hex to Dice Result</h2>
 
   <label>🔢 Nhập chuỗi hex:</label>
-  <input type="text" id="hexInput" value="">
-
-  <label>🛠️ Phương pháp chia:</label>
-  <select id="methodSelect">
-    <option value="auto">Auto (chia đều)</option>
-    <option value="fixed">Fixed (7–7–6)</option>
-  </select>
+  <input type="text" id="hexInput" placeholder="Dán chuỗi hex vào đây...">
 
   <button onclick="convertHexToDice()">🎯 Chuyển đổi</button>
 
@@ -28,8 +22,8 @@
   <script>
     function hexToDiceCustom(hexStr, method = 'auto') {
       const digits = Array.from(hexStr).filter(ch => !isNaN(parseInt(ch))).map(ch => parseInt(ch));
-
       let groups = [];
+
       if (method === 'fixed') {
         groups = [
           digits.slice(0, 7),
@@ -56,11 +50,17 @@
 
     function convertHexToDice() {
       const hexInput = document.getElementById("hexInput");
-      const method = document.getElementById("methodSelect").value;
       const hex = hexInput.value.trim();
-      const result = hexToDiceCustom(hex, method);
-      document.getElementById("result").textContent = `🎲 Kết quả: [${result.join(', ')}]`;
-      hexInput.value = ""; // 🔥 Tự động xóa nội dung sau khi xử lý
+      if (!hex) return;
+
+      const resultAuto = hexToDiceCustom(hex, 'auto');
+      const resultFixed = hexToDiceCustom(hex, 'fixed');
+
+      document.getElementById("result").textContent =
+        `🧠 Auto (chia đều): [${resultAuto.join(', ')}]\n` +
+        `🧱 Fixed (7–7–6): [${resultFixed.join(', ')}]`;
+
+      hexInput.value = ""; // 🔥 Xóa ô nhập sau khi xử lý
     }
   </script>
 </body>
