@@ -51,27 +51,11 @@
     function getSuggestionsFromDice(dice) {
       const pairs = [];
       for (let i = 0; i < dice.length; i++) {
-        for (let j = 0; j < dice.length; j++) {
-          if (i <= j) {
-            pairs.push(`${dice[i]} – ${dice[j]}`);
-          }
+        for (let j = i; j < dice.length; j++) {
+          pairs.push(`${dice[i]} – ${dice[j]}`);
         }
       }
       return pairs.slice(0, 3);
-    }
-
-    function getSuggestionsFromHex(hexStr) {
-      const digits = Array.from(hexStr).filter(ch => !isNaN(parseInt(ch))).map(ch => parseInt(ch));
-      const hexPairs = [];
-
-      for (let i = 0; i < digits.length - 1; i++) {
-        const a = (digits[i] % 6) + 1;
-        const b = (digits[i + 1] % 6) + 1;
-        hexPairs.push(`${a} – ${b}`);
-      }
-
-      // Trả về 3 gợi ý đầu tiên từ hex
-      return hexPairs.slice(0, 3);
     }
 
     function convertHexToDice() {
@@ -82,16 +66,13 @@
       const resultAuto = hexToDiceCustom(hex, 'auto');
       const resultFixed = hexToDiceCustom(hex, 'fixed');
 
-      const suggestionsDice = getSuggestionsFromDice(resultAuto);
-      const suggestionsHex = getSuggestionsFromHex(hex);
+      const suggestionsFromFixed = getSuggestionsFromDice(resultFixed);
 
       document.getElementById("result").textContent =
         `🧠 Auto (chia đều): [${resultAuto.join(', ')}]\n` +
         `🧱 Fixed (7–7–6): [${resultFixed.join(', ')}]\n\n` +
-        `🎯 Gợi ý từ kết quả xúc xắc:\n` +
-        suggestionsDice.map(s => `👉 ${s}`).join('\n') + `\n\n` +
-        `📟 Gợi ý từ mã hex:\n` +
-        suggestionsHex.map(s => `👉 ${s}`).join('\n');
+        `📟 Gợi ý từ kết quả Fixed:\n` +
+        suggestionsFromFixed.map(s => `👉 ${s}`).join('\n');
 
       hexInput.value = ""; // 🔥 Xóa ô nhập sau khi xử lý
     }
