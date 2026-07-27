@@ -10,9 +10,9 @@
   </style>
 </head>
 <body>
-  <h2>🎲 Hex to Dice Result</h2>
+  <h2>🎲 PHONG VU</h2>
 
-  <label>🔢 Nhập chuỗi hex:</label>
+  <label>🔢 Nhập MD5:</label>
   <input type="text" id="hexInput" placeholder="Dán chuỗi hex vào đây...">
 
   <button onclick="convertHexToDice()">🎯 Chuyển đổi</button>
@@ -81,8 +81,8 @@
 
       document.getElementById("result").textContent =
         `🧠 Auto (chia đều): [${resultAuto.join(', ')}]\n` +
-        `🧱 Fixed (7–7–6): [${resultFixed.join(', ')}]\n\n` +
-        `🎯 Gợi ý kết hợp ngẫu nhiên:\n` +
+        
+    `🎯 Gợi ý kết hợp ngẫu nhiên:\n` +
         combinedSuggestions.map(s => `👉 ${s}`).join('\n');
 
       hexInput.value = ""; // 🔥 Xóa ô nhập sau khi xử lý
