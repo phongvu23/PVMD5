@@ -1,92 +1,174 @@
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <title>Hex to Dice</title>
-  <style>
-    body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; }
-    input, button { margin-top: 10px; padding: 8px; width: 100%; }
-    .result { margin-top: 20px; font-size: 1.2em; font-weight: bold; white-space: pre-line; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HEX Converter</title>
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 25px 15px;
+  background: #101827;
+  color: #fff;
+  font-family: Arial, sans-serif;
+}
+
+.container {
+  max-width: 650px;
+  margin: 30px auto;
+  padding: 25px;
+  background: #1e293b;
+  border-radius: 16px;
+}
+
+h2 { text-align: center; }
+
+input {
+  width: 100%;
+  padding: 15px;
+  margin: 15px 0;
+  background: #0f172a;
+  border: 1px solid #475569;
+  border-radius: 8px;
+  color: white;
+  font-size: 16px;
+}
+
+button {
+  padding: 12px 18px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  background: #3b82f6;
+  color: white;
+}
+
+button:hover { opacity: .85; }
+
+.result {
+  margin-top: 25px;
+  padding: 15px;
+  background: #0f172a;
+  border-radius: 10px;
+  overflow-wrap: anywhere;
+}
+
+.item {
+  padding: 12px;
+  margin: 10px 0;
+  background: #334155;
+  border-radius: 8px;
+}
+
+.number {
+  color: #4ade80;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.status {
+  margin-top: 15px;
+  font-weight: bold;
+}
+
+.error { color: #f87171; }
+.success { color: #4ade80; }
+
+</style>
 </head>
 <body>
-  <h2>🎲 PHONG VU</h2>
 
-  <label>🔢 Nhập MD5:</label>
-  <input type="text" id="hexInput" placeholder="Dán chuỗi hex vào đây...">
+<div class="container">
+  <h2>HEX → DECIMAL → MOD 5</h2>
 
-  <button onclick="convertHexToDice()">🎯 Chuyển đổi</button>
+  <label>Nhập mã HEX (32 ký tự):</label>
 
-  <div class="result" id="result">👉 Kết quả sẽ hiển thị ở đây.</div>
+  <input
+    id="hexInput"
+    type="text"
+    maxlength="32"
+    placeholder="Nhập mã HEX tại đây..."
+  >
 
-  <script>
-    function hexToDiceCustom(hexStr, method = 'auto') {
-      const digits = Array.from(hexStr).filter(ch => !isNaN(parseInt(ch))).map(ch => parseInt(ch));
-      let groups = [];
+  <button onclick="convert()">Chuyển đổi</button>
+  <button onclick="copyResult()">Sao chép</button>
 
-      if (method === 'fixed') {
-        groups = [
-          digits.slice(0, 7),
-          digits.slice(7, 14),
-          digits.slice(14, 20)
-        ];
-      } else if (method === 'auto') {
-        const n = digits.length;
-        const base = Math.floor(n / 3);
-        const rem = n % 3;
-        const sizes = [base + (0 < rem ? 1 : 0), base + (1 < rem ? 1 : 0), base];
-        let idx = 0;
-        for (const size of sizes) {
-          groups.push(digits.slice(idx, idx + size));
-          idx += size;
-        }
-      } else {
-        return ["❌ Phương pháp chia không hợp lệ."];
-      }
+  <div class="result" id="result">
+    Kết quả sẽ hiển thị tại đây.
+  </div>
+</div>
 
-      const dice = groups.map(group => (group.reduce((a, b) => a + b, 0) % 6) + 1);
-      return dice;
-    }
+<script>
+function convert() {
+  const hex = document
+    .getElementById("hexInput")
+    .value.trim();
 
-    function shuffleArray(arr) {
-      for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-      }
-    }
+  const result = document.getElementById("result");
 
-    function getCombinedSuggestions(auto, fixed) {
-      const all = auto.concat(fixed);
-      const pairs = [];
+  if (!/^[0-9a-fA-F]{32}$/.test(hex)) {
+    result.innerHTML =
+      '<p class="error">Vui lòng nhập đúng mã HEX gồm 32 ký tự!</p>';
+    return;
+  }
 
-      for (let i = 0; i < all.length; i++) {
-        for (let j = i; j < all.length; j++) {
-          pairs.push(`${all[i]} – ${all[j]}`);
-        }
-      }
+  const parts = hex.match(/.{8}/g);
 
-      shuffleArray(pairs); // 🔀 Xáo trộn danh sách cặp
-      return pairs.slice(0, 3); // ✅ Trả về 3 cặp ngẫu nhiên
-    }
+  let output = [];
+  let html = "";
+  let values = [];
 
-    function convertHexToDice() {
-      const hexInput = document.getElementById("hexInput");
-      const hex = hexInput.value.trim();
-      if (!hex) return;
+  parts.forEach((part, index) => {
+    const decimal = parseInt(part, 16);
+    const mod = decimal % 5;
 
-      const resultAuto = hexToDiceCustom(hex, 'auto');
-      const resultFixed = hexToDiceCustom(hex, 'fixed');
+    values.push(mod);
+    output.push(mod);
 
-      const combinedSuggestions = getCombinedSuggestions(resultAuto, resultFixed);
+    html += `
+      <div class="item">
+        <b>Phần ${index + 1}</b><br>
+        HEX: ${part}<br>
+        DECIMAL: ${decimal}<br>
+        Kết quả MOD 5:
+        <span class="number">${mod}</span>
+      </div>
+    `;
+  });
 
-      document.getElementById("result").textContent =
-        `🧠 Auto (chia đều): [${resultAuto.join(', ')}]\n` +
-        
-    `🎯 Gợi ý kết hợp ngẫu nhiên:\n` +
-        combinedSuggestions.map(s => `👉 ${s}`).join('\n');
+  const unique = new Set(values);
 
-      hexInput.value = ""; // 🔥 Xóa ô nhập sau khi xử lý
-    }
-  </script>
+  let status = unique.size === 4
+    ? '<p class="success">✓ Cả 4 kết quả đều khác nhau</p>'
+    : '<p class="error">⚠ Có kết quả bị trùng nhau</p>';
+
+  html += `
+    <hr>
+    <h3>Kết quả cuối cùng:</h3>
+    <div class="number">${output.join(" - ")}</div>
+    ${status}
+  `;
+
+  result.innerHTML = html;
+
+  window.lastResult = output.join("-");
+}
+
+function copyResult() {
+  if (!window.lastResult) {
+    alert("Bạn chưa chuyển đổi mã!");
+    return;
+  }
+
+  navigator.clipboard.writeText(window.lastResult)
+    .then(() => alert("Đã sao chép kết quả!"))
+    .catch(() => alert("Không thể sao chép."));
+}
+</script>
+
 </body>
 </html>
