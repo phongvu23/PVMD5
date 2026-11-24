@@ -5,26 +5,26 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>HEX Converter</title>
+
 <style>
 * { box-sizing: border-box; }
 
 body {
   margin: 0;
-  padding: 25px 15px;
+  padding: 20px;
   background: #101827;
-  color: #fff;
+  color: white;
   font-family: Arial, sans-serif;
 }
 
 .container {
-  max-width: 650px;
-  margin: 30px auto;
+  max-width: 500px;
+  margin: 50px auto;
   padding: 25px;
   background: #1e293b;
-  border-radius: 16px;
+  border-radius: 15px;
+  text-align: center;
 }
-
-h2 { text-align: center; }
 
 input {
   width: 100%;
@@ -38,135 +38,93 @@ input {
 }
 
 button {
-  padding: 12px 18px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: bold;
+  width: 100%;
+  padding: 14px;
   background: #3b82f6;
   color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
 }
-
-button:hover { opacity: .85; }
 
 .result {
   margin-top: 25px;
-  padding: 15px;
+  padding: 20px;
   background: #0f172a;
   border-radius: 10px;
-  overflow-wrap: anywhere;
-}
-
-.item {
-  padding: 12px;
-  margin: 10px 0;
-  background: #334155;
-  border-radius: 8px;
 }
 
 .number {
-  color: #4ade80;
-  font-size: 24px;
+  font-size: 32px;
   font-weight: bold;
+  color: #4ade80;
+  letter-spacing: 4px;
 }
 
 .status {
   margin-top: 15px;
-  font-weight: bold;
+  font-size: 14px;
 }
 
 .error { color: #f87171; }
 .success { color: #4ade80; }
-
 </style>
 </head>
+
 <body>
 
 <div class="container">
-  <h2>HEX → DECIMAL → MOD 5</h2>
 
-  <label>Nhập mã HEX (32 ký tự):</label>
+<h2>HEX CONVERTER</h2>
 
-  <input
-    id="hexInput"
-    type="text"
-    maxlength="32"
-    placeholder="Nhập mã HEX tại đây..."
-  >
+<input
+  id="hexInput"
+  type="text"
+  maxlength="32"
+  placeholder="Nhập mã HEX 32 ký tự..."
+>
 
-  <button onclick="convert()">Chuyển đổi</button>
-  <button onclick="copyResult()">Sao chép</button>
+<button onclick="convert()">Đoán mò</button>
 
-  <div class="result" id="result">
-    Kết quả sẽ hiển thị tại đây.
-  </div>
+<div class="result" id="result">
+  <div class="number">- - - -</div>
+</div>
+
 </div>
 
 <script>
 function convert() {
-  const hex = document
-    .getElementById("hexInput")
-    .value.trim();
-
+  const input = document.getElementById("hexInput");
+  const hex = input.value.trim();
   const result = document.getElementById("result");
+
+  // Xóa mã ngay sau khi bấm chuyển đổi
+  input.value = "";
 
   if (!/^[0-9a-fA-F]{32}$/.test(hex)) {
     result.innerHTML =
-      '<p class="error">Vui lòng nhập đúng mã HEX gồm 32 ký tự!</p>';
+      '<div class="error">Mã HEX không hợp lệ! Cần đúng 32 ký tự.</div>';
     return;
   }
 
   const parts = hex.match(/.{8}/g);
 
-  let output = [];
-  let html = "";
-  let values = [];
-
-  parts.forEach((part, index) => {
-    const decimal = parseInt(part, 16);
-    const mod = decimal % 5;
-
-    values.push(mod);
-    output.push(mod);
-
-    html += `
-      <div class="item">
-        <b>Phần ${index + 1}</b><br>
-        HEX: ${part}<br>
-        DECIMAL: ${decimal}<br>
-        Kết quả MOD 5:
-        <span class="number">${mod}</span>
-      </div>
-    `;
-  });
+  const values = parts.map(part =>
+    parseInt(part, 16) % 5
+  );
 
   const unique = new Set(values);
 
   let status = unique.size === 4
-    ? '<p class="success">✓ Cả 4 kết quả đều khác nhau</p>'
-    : '<p class="error">⚠ Có kết quả bị trùng nhau</p>';
+    ? '<div class="status success">✓ 4 kết quả khác nhau</div>'
+    : '<div class="status error">⚠ Có kết quả trùng nhau</div>';
 
-  html += `
-    <hr>
-    <h3>Kết quả cuối cùng:</h3>
-    <div class="number">${output.join(" - ")}</div>
+  result.innerHTML = `
+    <div class="number">${values.join(" - ")}</div>
     ${status}
   `;
-
-  result.innerHTML = html;
-
-  window.lastResult = output.join("-");
-}
-
-function copyResult() {
-  if (!window.lastResult) {
-    alert("Bạn chưa chuyển đổi mã!");
-    return;
-  }
-
-  navigator.clipboard.writeText(window.lastResult)
-    .then(() => alert("Đã sao chép kết quả!"))
-    .catch(() => alert("Không thể sao chép."));
 }
 </script>
 
