@@ -4,12 +4,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tiên chi vanga :))</title>
+<title>HEX AUTO CONVERTER</title>
 
 <style>
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
   margin: 0;
@@ -28,9 +26,7 @@ body {
   text-align: center;
 }
 
-h2 {
-  color: #60a5fa;
-}
+h2 { color: #60a5fa; }
 
 .status {
   margin: 15px 0;
@@ -53,6 +49,8 @@ button {
   cursor: pointer;
 }
 
+button:disabled { opacity: .5; }
+
 .result {
   margin-top: 20px;
   padding: 20px;
@@ -73,13 +71,15 @@ button {
   letter-spacing: 5px;
 }
 
-.success {
-  color: #4ade80;
+.pattern {
+  margin-top: 20px;
+  font-size: 30px;
+  font-weight: bold;
+  color: #facc15;
 }
 
-.error {
-  color: #f87171;
-}
+.success { color: #4ade80; }
+.error { color: #f87171; }
 
 .history {
   margin-top: 25px;
@@ -101,19 +101,17 @@ button {
   margin: 8px 0;
 }
 
-.small {
-  color: #94a3b8;
-  font-size: 12px;
-}
-
 .history-symbols {
   font-size: 23px;
   margin: 8px 0;
 }
 
-.clear {
-  background: #dc2626;
+.small {
+  color: #94a3b8;
+  font-size: 12px;
 }
+
+.clear { background: #dc2626; }
 </style>
 </head>
 
@@ -137,7 +135,8 @@ button {
 
 <div class="result" id="result">
   <div class="number">- - - -</div>
-  <div class="symbols">⚪ 🔴 ⚪ 🔴</div>
+  <div class="symbols">🔴 ⚪ 🔴 ⚪</div>
+  <div class="pattern">ĐANG CHỜ</div>
   <div class="small">Chờ mã HEX 32 ký tự</div>
 </div>
 
@@ -154,10 +153,6 @@ button {
 
 <script>
 
-// ==========================
-// KHAI BÁO
-// ==========================
-
 const result = document.getElementById("result");
 const autoStatus = document.getElementById("autoStatus");
 const historyBox = document.getElementById("history");
@@ -170,7 +165,6 @@ const HISTORY_KEY = "hex_clipboard_history";
 
 let lastHex = "";
 let autoEnabled = false;
-let timer = null;
 
 // ==========================
 // PHÂN TÍCH HEX
@@ -181,32 +175,56 @@ function convert(hex) {
   hex = hex.trim();
 
   if (!/^[0-9a-fA-F]{32}$/.test(hex)) {
-    autoStatus.textContent =
-      "Mã HEX không hợp lệ";
+    autoStatus.textContent = "Mã HEX không hợp lệ";
     return false;
   }
 
-  if (hex === lastHex) {
-    return false;
-  }
+  if (hex === lastHex) return false;
 
   lastHex = hex;
 
   const parts = hex.match(/.{8}/g);
 
-  // KẾT QUẢ TỪ 1 ĐẾN 4
+  // Kết quả từ 1 đến 4
   const values = parts.map(part =>
     (parseInt(part, 16) % 4) + 1
   );
 
-  // QUY ĐỔI BIỂU TƯỢNG
+  // 1 và 3 đỏ, 2 và 4 trắng
   const symbols = values.map(value => {
     if (value === 1 || value === 3) {
-      return "🔴 ";
+      return "🔴";
     }
-
-    return "⚪ ";
+    return "⚪";
   });
+
+  // Đếm màu
+  const redCount = symbols.filter(
+    s => s === "🔴"
+  ).length;
+
+  const whiteCount = symbols.filter(
+    s => s === "⚪"
+  ).length;
+
+  // Phân loại mẫu
+  let pattern = "";
+
+  if (redCount === 3 && whiteCount === 1) {
+    pattern = "3D1T";
+  }
+  else if (whiteCount === 3 && redCount === 1) {
+    pattern = "3T1D";
+  }
+  else if (redCount === 2 && whiteCount === 2) {
+    pattern = "2D2T";
+  }
+  else if (redCount === 4) {
+    pattern = "4D";
+  }
+  else if (whiteCount === 4) {
+    pattern = "4T";
+  }
 
   const unique = new Set(values);
 
@@ -214,6 +232,7 @@ function convert(hex) {
     ? '<div class="success">✓ 4 kết quả khác nhau</div>'
     : '<div class="error">⚠ Có kết quả trùng nhau</div>';
 
+  // Hiển thị kết quả
   result.innerHTML = `
     <div class="number">
       ${values.join(" - ")}
@@ -221,6 +240,10 @@ function convert(hex) {
 
     <div class="symbols">
       ${symbols.join(" ")}
+    </div>
+
+    <div class="pattern">
+      ${pattern}
     </div>
 
     <div style="margin-top:15px">
@@ -232,10 +255,9 @@ function convert(hex) {
     </div>
   `;
 
-  saveHistory(hex, values, symbols);
+  saveHistory(hex, values, symbols, pattern);
 
-  autoStatus.textContent =
-    "✓ Đã nhận mã HEX mới";
+  autoStatus.textContent = "✓ Đã nhận mã HEX mới";
 
   return true;
 }
@@ -244,7 +266,7 @@ function convert(hex) {
 // LƯU LỊCH SỬ
 // ==========================
 
-function saveHistory(hex, values, symbols) {
+function saveHistory(hex, values, symbols, pattern) {
 
   let history = JSON.parse(
     localStorage.getItem(HISTORY_KEY) || "[]"
@@ -254,6 +276,7 @@ function saveHistory(hex, values, symbols) {
     hex: hex,
     values: values.join(" - "),
     symbols: symbols.join(" "),
+    pattern: pattern,
     time: new Date().toLocaleString("vi-VN")
   });
 
@@ -296,11 +319,16 @@ function showHistory() {
     symbols.className = "history-symbols";
     symbols.textContent = item.symbols;
 
+    const pattern = document.createElement("div");
+    pattern.className = "pattern";
+    pattern.style.fontSize = "24px";
+    pattern.textContent = item.pattern;
+
     const hex = document.createElement("div");
     hex.className = "small";
     hex.textContent = item.hex;
 
-    div.append(time, values, symbols, hex);
+    div.append(time, values, symbols, pattern, hex);
 
     historyBox.appendChild(div);
   });
@@ -316,7 +344,7 @@ async function readClipboard() {
       !navigator.clipboard.readText) {
 
     autoStatus.textContent =
-      "Trình duyệt cần HTTPS để đọc Clipboard";
+      "Cần HTTPS để đọc Clipboard";
 
     return;
   }
@@ -325,26 +353,21 @@ async function readClipboard() {
 
     const text = await navigator.clipboard.readText();
 
-    // Tìm mã HEX 32 ký tự
     const matches = text.match(
       /[0-9a-fA-F]{32}/g
     );
 
     if (matches && matches.length > 0) {
-
       convert(matches[matches.length - 1]);
-
     } else {
-
       autoStatus.textContent =
-        "Đang chờ mã HEX 32 ký tự trong Clipboard";
-
+        "Đang chờ mã HEX 32 ký tự";
     }
 
   } catch (error) {
 
     autoStatus.textContent =
-      "Không có quyền đọc Clipboard. Hãy cấp quyền.";
+      "Không có quyền đọc Clipboard";
 
   }
 }
@@ -357,20 +380,17 @@ async function startAutoRead() {
 
   if (autoEnabled) return;
 
-  // Đọc trong thao tác bấm nút
   await readClipboard();
 
   autoEnabled = true;
 
-  startButton.textContent =
-    "ĐÃ BẬT TỰ ĐỘNG ĐỌC";
-
+  startButton.textContent = "ĐÃ BẬT TỰ ĐỘNG";
   startButton.disabled = true;
 
   autoStatus.textContent =
     "Đã bật. Copy mã rồi quay lại trang.";
 
-  timer = setInterval(() => {
+  setInterval(() => {
 
     if (!document.hidden) {
       readClipboard();
@@ -380,19 +400,16 @@ async function startAutoRead() {
 }
 
 // ==========================
-// KHI QUAY LẠI TAB
+// QUAY LẠI TAB
 // ==========================
 
-document.addEventListener(
-  "visibilitychange",
-  () => {
+document.addEventListener("visibilitychange", () => {
 
-    if (!document.hidden && autoEnabled) {
-      readClipboard();
-    }
-
+  if (!document.hidden && autoEnabled) {
+    readClipboard();
   }
-);
+
+});
 
 // ==========================
 // XÓA LỊCH SỬ
@@ -400,38 +417,21 @@ document.addEventListener(
 
 function clearHistory() {
 
-  if (!confirm("Bạn muốn xóa toàn bộ lịch sử?")) {
-    return;
-  }
+  if (!confirm("Bạn muốn xóa lịch sử?")) return;
 
   localStorage.removeItem(HISTORY_KEY);
-
   historyBox.innerHTML = "";
 }
 
 // ==========================
-// SỰ KIỆN NÚT
+// SỰ KIỆN
 // ==========================
 
-startButton.addEventListener(
-  "click",
-  startAutoRead
-);
+startButton.addEventListener("click", startAutoRead);
+checkButton.addEventListener("click", readClipboard);
+clearButton.addEventListener("click", clearHistory);
 
-checkButton.addEventListener(
-  "click",
-  readClipboard
-);
-
-clearButton.addEventListener(
-  "click",
-  clearHistory
-);
-
-// ==========================
 // KHỞI ĐỘNG
-// ==========================
-
 showHistory();
 
 </script>
