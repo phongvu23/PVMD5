@@ -1,16 +1,165 @@
 
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HEX AUTO CLIPBOARD</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 20px;
+  background: #101827;
+  color: white;
+  font-family: Arial, sans-serif;
+}
+
+.container {
+  max-width: 500px;
+  margin: 30px auto;
+  padding: 25px;
+  background: #1e293b;
+  border-radius: 15px;
+  text-align: center;
+}
+
+h2 { color: #60a5fa; }
+
+.status {
+  margin: 15px 0;
+  padding: 12px;
+  background: #0f172a;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 8px;
+  background: #2563eb;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:disabled { opacity: .5; }
+
+.result {
+  margin-top: 20px;
+  padding: 20px;
+  background: #0f172a;
+  border-radius: 10px;
+}
+
+.number {
+  font-size: 32px;
+  font-weight: bold;
+  color: #4ade80;
+  letter-spacing: 3px;
+}
+
+.symbols {
+  font-size: 32px;
+  margin-top: 15px;
+  letter-spacing: 5px;
+}
+
+.success { color: #4ade80; }
+.error { color: #f87171; }
+
+.history {
+  margin-top: 25px;
+  text-align: left;
+}
+
+.history-item {
+  background: #0f172a;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 10px;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.history-item .values {
+  color: #4ade80;
+  font-weight: bold;
+  margin: 8px 0;
+}
+
+.history-item .symbols {
+  font-size: 23px;
+}
+
+.small {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.clear { background: #dc2626; }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>HEX AUTO CLIPBOARD</h2>
+
+<div class="status" id="autoStatus">
+  Chưa bật đọc Clipboard
+</div>
+
+<button id="startButton" onclick="startAutoRead()">
+  BẬT TỰ ĐỘNG ĐỌC MÃ
+</button>
+
+<button onclick="readClipboard()">
+  KIỂM TRA CLIPBOARD NGAY
+</button>
+
+<div class="result" id="result">
+  <div class="number">- - - -</div>
+  <div class="symbols">⚪ 🔴 ⚪ 🔴</div>
+  <div class="small">Đang chờ mã HEX 32 ký tự</div>
+</div>
+
+<div class="history">
+  <h3>LỊCH SỬ KẾT QUẢ</h3>
+  <div id="history"></div>
+
+  <button class="clear" onclick="clearHistory()">
+    XÓA LỊCH SỬ
+  </button>
+</div>
+
+</div>
+
 <script>
 const result = document.getElementById("result");
-const status = document.getElementById("autoStatus");
+const autoStatus = document.getElementById("autoStatus");
+const historyBox = document.getElementById("history");
+const startButton = document.getElementById("startButton");
+
+const HISTORY_KEY = "hex_clipboard_history";
 
 let lastHex = "";
+let autoEnabled = false;
 
+// PHÂN TÍCH HEX
 function convert(hex) {
   hex = hex.trim();
 
-  if (!/^[0-9a-fA-F]{32}$/.test(hex)) return;
+  if (!/^[0-9a-fA-F]{32}$/.test(hex)) return false;
+  if (hex === lastHex) return false;
 
-  if (hex === lastHex) return;
   lastHex = hex;
 
   const parts = hex.match(/.{8}/g);
@@ -27,71 +176,146 @@ function convert(hex) {
 
   const unique = new Set(values);
 
+  const status = unique.size === 4
+    ? '<div class="success">✓ 4 kết quả khác nhau</div>'
+    : '<div class="error">⚠ Có kết quả trùng nhau</div>';
+
   result.innerHTML = `
-    <div class="number">
-      ${values.join(" - ")}
-    </div>
-
-    <div class="symbols">
-      ${symbols.join(" ")}
-    </div>
-
-    <div class="status ${
-      unique.size === 4 ? "success" : "error"
-    }">
-      ${
-        unique.size === 4
-        ? "✓ 4 kết quả khác nhau"
-        : "⚠ Có kết quả trùng nhau"
-      }
-    </div>
+    <div class="number">${values.join(" - ")}</div>
+    <div class="symbols">${symbols.join(" ")}</div>
+    <div style="margin-top:15px">${status}</div>
+    <div class="small" style="margin-top:10px">${hex}</div>
   `;
 
-  localStorage.setItem("hex_auto_value", hex);
+  saveHistory(hex, values, symbols);
+
+  autoStatus.textContent = "✓ Đã nhận mã HEX mới";
+
+  return true;
 }
 
-// Đọc Clipboard
+// LƯU LỊCH SỬ
+function saveHistory(hex, values, symbols) {
+  let history = JSON.parse(
+    localStorage.getItem(HISTORY_KEY) || "[]"
+  );
+
+  history.unshift({
+    hex,
+    values: values.join(" - "),
+    symbols: symbols.join(" "),
+    time: new Date().toLocaleString("vi-VN")
+  });
+
+  history = history.slice(0, 20);
+
+  localStorage.setItem(
+    HISTORY_KEY,
+    JSON.stringify(history)
+  );
+
+  showHistory();
+}
+
+// HIỂN THỊ LỊCH SỬ
+function showHistory() {
+  const history = JSON.parse(
+    localStorage.getItem(HISTORY_KEY) || "[]"
+  );
+
+  historyBox.innerHTML = "";
+
+  history.forEach(item => {
+    const div = document.createElement("div");
+    div.className = "history-item";
+
+    const time = document.createElement("div");
+    time.className = "small";
+    time.textContent = item.time;
+
+    const values = document.createElement("div");
+    values.className = "values";
+    values.textContent = item.values;
+
+    const symbols = document.createElement("div");
+    symbols.className = "symbols";
+    symbols.textContent = item.symbols;
+
+    const hex = document.createElement("div");
+    hex.className = "small";
+    hex.textContent = item.hex;
+
+    div.append(time, values, symbols, hex);
+    historyBox.appendChild(div);
+  });
+}
+
+// ĐỌC CLIPBOARD
 async function readClipboard() {
-  try {
-    const text = await navigator.clipboard.readText();
-
-    const match = text.match(
-      /[0-9a-fA-F]{32}/
-    );
-
-    if (match) {
-      convert(match[0]);
-      status.textContent = "✓ Đã tự động nhận mã HEX";
-    }
-
-  } catch (error) {
-    status.textContent =
-      "Chưa được cấp quyền đọc Clipboard";
-  }
-}
-
-// Yêu cầu quyền đọc Clipboard
-async function startAutoRead() {
   if (!navigator.clipboard ||
       !navigator.clipboard.readText) {
-    status.textContent =
-      "Trình duyệt không hỗ trợ Clipboard API";
+    autoStatus.textContent =
+      "Cần HTTPS hoặc trình duyệt hỗ trợ Clipboard API";
     return;
   }
 
+  try {
+    const text = await navigator.clipboard.readText();
+
+    const matches = text.match(/[0-9a-fA-F]{32}/g);
+
+    if (matches && matches.length > 0) {
+      convert(matches[matches.length - 1]);
+    } else {
+      autoStatus.textContent =
+        "Clipboard chưa có mã HEX 32 ký tự";
+    }
+
+  } catch (error) {
+    autoStatus.textContent =
+      "Không đọc được Clipboard. Hãy cấp quyền truy cập.";
+  }
+}
+
+// BẬT TỰ ĐỘNG
+async function startAutoRead() {
+  if (autoEnabled) return;
+
   await readClipboard();
 
-  // Kiểm tra lại khi người dùng quay về tab
-  document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) readClipboard();
-  });
+  autoEnabled = true;
 
-  // Kiểm tra định kỳ khi trang đang mở
+  startButton.textContent = "ĐANG BẬT TỰ ĐỘNG";
+  startButton.disabled = true;
+
+  autoStatus.textContent =
+    "Đã bật. Copy mã rồi quay lại trang.";
+
   setInterval(() => {
-    if (!document.hidden) readClipboard();
+    if (!document.hidden) {
+      readClipboard();
+    }
   }, 1500);
 }
 
-// Khởi động
-startAutoRead();
+// KHI QUAY LẠI TAB
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && autoEnabled) {
+    readClipboard();
+  }
+});
+
+// XÓA LỊCH SỬ
+function clearHistory() {
+  if (!confirm("Bạn muốn xóa toàn bộ lịch sử?")) return;
+
+  localStorage.removeItem(HISTORY_KEY);
+  historyBox.innerHTML = "";
+}
+
+// KHỞI ĐỘNG
+showHistory();
 </script>
+
+</body>
+</html>
