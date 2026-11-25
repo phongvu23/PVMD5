@@ -211,19 +211,19 @@ function convert(hex) {
   let pattern = "";
 
   if (redCount === 3 && whiteCount === 1) {
-    pattern = "3D1T";
+    pattern = "LẺ 3D-1T";
   }
   else if (whiteCount === 3 && redCount === 1) {
-    pattern = "3T1D";
+    pattern = "LẺ 3T-1D";
   }
   else if (redCount === 2 && whiteCount === 2) {
-    pattern = "2D2T";
+    pattern = "CHẴN 2D-2T";
   }
   else if (redCount === 4) {
-    pattern = "4D";
+    pattern = "CHẴN 4D";
   }
   else if (whiteCount === 4) {
-    pattern = "4T";
+    pattern = "CHẴN 4T";
   }
 
   const unique = new Set(values);
