@@ -1,113 +1,17 @@
 
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>HEX Converter</title>
-
-<style>
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  padding: 20px;
-  background: #101827;
-  color: white;
-  font-family: Arial, sans-serif;
-}
-
-.container {
-  max-width: 500px;
-  margin: 50px auto;
-  padding: 25px;
-  background: #1e293b;
-  border-radius: 15px;
-  text-align: center;
-}
-
-input {
-  width: 100%;
-  padding: 15px;
-  margin: 15px 0;
-  background: #0f172a;
-  border: 1px solid #475569;
-  border-radius: 8px;
-  color: white;
-  font-size: 16px;
-}
-
-button {
-  width: 100%;
-  padding: 14px;
-  background: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.result {
-  margin-top: 25px;
-  padding: 20px;
-  background: #0f172a;
-  border-radius: 10px;
-}
-
-.number {
-  font-size: 32px;
-  font-weight: bold;
-  color: #4ade80;
-  letter-spacing: 4px;
-}
-
-.status {
-  margin-top: 15px;
-  font-size: 14px;
-}
-
-.error { color: #f87171; }
-.success { color: #4ade80; }
-</style>
-</head>
-
-<body>
-
-<div class="container">
-
-<h2>HEX CONVERTER</h2>
-
-<input
-  id="hexInput"
-  type="text"
-  maxlength="32"
-  placeholder="Nhập mã HEX 32 ký tự..."
->
-
-<button onclick="convert()">Đoán mò</button>
-
-<div class="result" id="result">
-  <div class="number">- - - -</div>
-</div>
-
-</div>
-
 <script>
-function convert() {
-  const input = document.getElementById("hexInput");
-  const hex = input.value.trim();
-  const result = document.getElementById("result");
+const result = document.getElementById("result");
+const status = document.getElementById("autoStatus");
 
-  // Xóa mã ngay sau khi bấm chuyển đổi
-  input.value = "";
+let lastHex = "";
 
-  if (!/^[0-9a-fA-F]{32}$/.test(hex)) {
-    result.innerHTML =
-      '<div class="error">Mã HEX không hợp lệ! Cần đúng 32 ký tự.</div>';
-    return;
-  }
+function convert(hex) {
+  hex = hex.trim();
+
+  if (!/^[0-9a-fA-F]{32}$/.test(hex)) return;
+
+  if (hex === lastHex) return;
+  lastHex = hex;
 
   const parts = hex.match(/.{8}/g);
 
@@ -115,18 +19,79 @@ function convert() {
     parseInt(part, 16) % 5
   );
 
+  const symbols = values.map(value => {
+    if (value === 1 || value === 3) return "⚪";
+    if (value === 2 || value === 4) return "🔴";
+    return "⚫";
+  });
+
   const unique = new Set(values);
 
-  let status = unique.size === 4
-    ? '<div class="status success">✓ 4 kết quả khác nhau</div>'
-    : '<div class="status error">⚠ Có kết quả trùng nhau</div>';
-
   result.innerHTML = `
-    <div class="number">${values.join(" - ")}</div>
-    ${status}
-  `;
-}
-</script>
+    <div class="number">
+      ${values.join(" - ")}
+    </div>
 
-</body>
-</html>
+    <div class="symbols">
+      ${symbols.join(" ")}
+    </div>
+
+    <div class="status ${
+      unique.size === 4 ? "success" : "error"
+    }">
+      ${
+        unique.size === 4
+        ? "✓ 4 kết quả khác nhau"
+        : "⚠ Có kết quả trùng nhau"
+      }
+    </div>
+  `;
+
+  localStorage.setItem("hex_auto_value", hex);
+}
+
+// Đọc Clipboard
+async function readClipboard() {
+  try {
+    const text = await navigator.clipboard.readText();
+
+    const match = text.match(
+      /[0-9a-fA-F]{32}/
+    );
+
+    if (match) {
+      convert(match[0]);
+      status.textContent = "✓ Đã tự động nhận mã HEX";
+    }
+
+  } catch (error) {
+    status.textContent =
+      "Chưa được cấp quyền đọc Clipboard";
+  }
+}
+
+// Yêu cầu quyền đọc Clipboard
+async function startAutoRead() {
+  if (!navigator.clipboard ||
+      !navigator.clipboard.readText) {
+    status.textContent =
+      "Trình duyệt không hỗ trợ Clipboard API";
+    return;
+  }
+
+  await readClipboard();
+
+  // Kiểm tra lại khi người dùng quay về tab
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) readClipboard();
+  });
+
+  // Kiểm tra định kỳ khi trang đang mở
+  setInterval(() => {
+    if (!document.hidden) readClipboard();
+  }, 1500);
+}
+
+// Khởi động
+startAutoRead();
+</script>
