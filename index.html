@@ -165,7 +165,7 @@ function convert(hex) {
   const parts = hex.match(/.{8}/g);
 
   const values = parts.map(part =>
-    parseInt(part, 16) % 5
+    parseInt(part, 16) % 4) + 1
   );
 
   const symbols = values.map(value => {
