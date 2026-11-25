@@ -4,10 +4,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>HEX AUTO CLIPBOARD</title>
+<title>HEX AUTO 1-4</title>
 
 <style>
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 body {
   margin: 0;
@@ -26,7 +28,9 @@ body {
   text-align: center;
 }
 
-h2 { color: #60a5fa; }
+h2 {
+  color: #60a5fa;
+}
 
 .status {
   margin: 15px 0;
@@ -49,8 +53,6 @@ button {
   cursor: pointer;
 }
 
-button:disabled { opacity: .5; }
-
 .result {
   margin-top: 20px;
   padding: 20px;
@@ -71,8 +73,13 @@ button:disabled { opacity: .5; }
   letter-spacing: 5px;
 }
 
-.success { color: #4ade80; }
-.error { color: #f87171; }
+.success {
+  color: #4ade80;
+}
+
+.error {
+  color: #f87171;
+}
 
 .history {
   margin-top: 25px;
@@ -88,14 +95,10 @@ button:disabled { opacity: .5; }
   overflow-wrap: anywhere;
 }
 
-.history-item .values {
+.values {
   color: #4ade80;
   font-weight: bold;
   margin: 8px 0;
-}
-
-.history-item .symbols {
-  font-size: 23px;
 }
 
 .small {
@@ -103,7 +106,14 @@ button:disabled { opacity: .5; }
   font-size: 12px;
 }
 
-.clear { background: #dc2626; }
+.history-symbols {
+  font-size: 23px;
+  margin: 8px 0;
+}
+
+.clear {
+  background: #dc2626;
+}
 </style>
 </head>
 
@@ -111,31 +121,31 @@ button:disabled { opacity: .5; }
 
 <div class="container">
 
-<h2>HEX AUTO CLIPBOARD</h2>
+<h2>HEX AUTO CONVERTER</h2>
 
 <div class="status" id="autoStatus">
   Chưa bật đọc Clipboard
 </div>
 
-<button id="startButton" onclick="startAutoRead()">
+<button id="startButton">
   BẬT TỰ ĐỘNG ĐỌC MÃ
 </button>
 
-<button onclick="readClipboard()">
-  KIỂM TRA CLIPBOARD NGAY
+<button id="checkButton">
+  KIỂM TRA CLIPBOARD
 </button>
 
 <div class="result" id="result">
   <div class="number">- - - -</div>
   <div class="symbols">⚪ 🔴 ⚪ 🔴</div>
-  <div class="small">Đang chờ mã HEX 32 ký tự</div>
+  <div class="small">Chờ mã HEX 32 ký tự</div>
 </div>
 
 <div class="history">
   <h3>LỊCH SỬ KẾT QUẢ</h3>
   <div id="history"></div>
 
-  <button class="clear" onclick="clearHistory()">
+  <button class="clear" id="clearButton">
     XÓA LỊCH SỬ
   </button>
 </div>
@@ -143,35 +153,59 @@ button:disabled { opacity: .5; }
 </div>
 
 <script>
+
+// ==========================
+// KHAI BÁO
+// ==========================
+
 const result = document.getElementById("result");
 const autoStatus = document.getElementById("autoStatus");
 const historyBox = document.getElementById("history");
+
 const startButton = document.getElementById("startButton");
+const checkButton = document.getElementById("checkButton");
+const clearButton = document.getElementById("clearButton");
 
 const HISTORY_KEY = "hex_clipboard_history";
 
 let lastHex = "";
 let autoEnabled = false;
+let timer = null;
 
+// ==========================
 // PHÂN TÍCH HEX
+// ==========================
+
 function convert(hex) {
+
   hex = hex.trim();
 
-  if (!/^[0-9a-fA-F]{32}$/.test(hex)) return false;
-  if (hex === lastHex) return false;
+  if (!/^[0-9a-fA-F]{32}$/.test(hex)) {
+    autoStatus.textContent =
+      "Mã HEX không hợp lệ";
+    return false;
+  }
+
+  if (hex === lastHex) {
+    return false;
+  }
 
   lastHex = hex;
 
   const parts = hex.match(/.{8}/g);
 
+  // KẾT QUẢ TỪ 1 ĐẾN 4
   const values = parts.map(part =>
-    parseInt(part, 16) % 4) + 1
+    (parseInt(part, 16) % 4) + 1
   );
 
+  // QUY ĐỔI BIỂU TƯỢNG
   const symbols = values.map(value => {
-    if (value === 1 || value === 3) return "⚪";
-    if (value === 2 || value === 4) return "🔴";
-    return "⚫";
+    if (value === 1 || value === 3) {
+      return "⚪";
+    }
+
+    return "🔴";
   });
 
   const unique = new Set(values);
@@ -181,27 +215,43 @@ function convert(hex) {
     : '<div class="error">⚠ Có kết quả trùng nhau</div>';
 
   result.innerHTML = `
-    <div class="number">${values.join(" - ")}</div>
-    <div class="symbols">${symbols.join(" ")}</div>
-    <div style="margin-top:15px">${status}</div>
-    <div class="small" style="margin-top:10px">${hex}</div>
+    <div class="number">
+      ${values.join(" - ")}
+    </div>
+
+    <div class="symbols">
+      ${symbols.join(" ")}
+    </div>
+
+    <div style="margin-top:15px">
+      ${status}
+    </div>
+
+    <div class="small" style="margin-top:10px">
+      ${hex}
+    </div>
   `;
 
   saveHistory(hex, values, symbols);
 
-  autoStatus.textContent = "✓ Đã nhận mã HEX mới";
+  autoStatus.textContent =
+    "✓ Đã nhận mã HEX mới";
 
   return true;
 }
 
+// ==========================
 // LƯU LỊCH SỬ
+// ==========================
+
 function saveHistory(hex, values, symbols) {
+
   let history = JSON.parse(
     localStorage.getItem(HISTORY_KEY) || "[]"
   );
 
   history.unshift({
-    hex,
+    hex: hex,
     values: values.join(" - "),
     symbols: symbols.join(" "),
     time: new Date().toLocaleString("vi-VN")
@@ -217,8 +267,12 @@ function saveHistory(hex, values, symbols) {
   showHistory();
 }
 
+// ==========================
 // HIỂN THỊ LỊCH SỬ
+// ==========================
+
 function showHistory() {
+
   const history = JSON.parse(
     localStorage.getItem(HISTORY_KEY) || "[]"
   );
@@ -226,6 +280,7 @@ function showHistory() {
   historyBox.innerHTML = "";
 
   history.forEach(item => {
+
     const div = document.createElement("div");
     div.className = "history-item";
 
@@ -238,7 +293,7 @@ function showHistory() {
     values.textContent = item.values;
 
     const symbols = document.createElement("div");
-    symbols.className = "symbols";
+    symbols.className = "history-symbols";
     symbols.textContent = item.symbols;
 
     const hex = document.createElement("div");
@@ -246,75 +301,139 @@ function showHistory() {
     hex.textContent = item.hex;
 
     div.append(time, values, symbols, hex);
+
     historyBox.appendChild(div);
   });
 }
 
+// ==========================
 // ĐỌC CLIPBOARD
+// ==========================
+
 async function readClipboard() {
+
   if (!navigator.clipboard ||
       !navigator.clipboard.readText) {
+
     autoStatus.textContent =
-      "Cần HTTPS hoặc trình duyệt hỗ trợ Clipboard API";
+      "Trình duyệt cần HTTPS để đọc Clipboard";
+
     return;
   }
 
   try {
+
     const text = await navigator.clipboard.readText();
 
-    const matches = text.match(/[0-9a-fA-F]{32}/g);
+    // Tìm mã HEX 32 ký tự
+    const matches = text.match(
+      /[0-9a-fA-F]{32}/g
+    );
 
     if (matches && matches.length > 0) {
+
       convert(matches[matches.length - 1]);
+
     } else {
+
       autoStatus.textContent =
-        "Clipboard chưa có mã HEX 32 ký tự";
+        "Đang chờ mã HEX 32 ký tự trong Clipboard";
+
     }
 
   } catch (error) {
+
     autoStatus.textContent =
-      "Không đọc được Clipboard. Hãy cấp quyền truy cập.";
+      "Không có quyền đọc Clipboard. Hãy cấp quyền.";
+
   }
 }
 
+// ==========================
 // BẬT TỰ ĐỘNG
+// ==========================
+
 async function startAutoRead() {
+
   if (autoEnabled) return;
 
+  // Đọc trong thao tác bấm nút
   await readClipboard();
 
   autoEnabled = true;
 
-  startButton.textContent = "ĐANG BẬT TỰ ĐỘNG";
+  startButton.textContent =
+    "ĐÃ BẬT TỰ ĐỘNG ĐỌC";
+
   startButton.disabled = true;
 
   autoStatus.textContent =
     "Đã bật. Copy mã rồi quay lại trang.";
 
-  setInterval(() => {
+  timer = setInterval(() => {
+
     if (!document.hidden) {
       readClipboard();
     }
+
   }, 1500);
 }
 
+// ==========================
 // KHI QUAY LẠI TAB
-document.addEventListener("visibilitychange", () => {
-  if (!document.hidden && autoEnabled) {
-    readClipboard();
-  }
-});
+// ==========================
 
+document.addEventListener(
+  "visibilitychange",
+  () => {
+
+    if (!document.hidden && autoEnabled) {
+      readClipboard();
+    }
+
+  }
+);
+
+// ==========================
 // XÓA LỊCH SỬ
+// ==========================
+
 function clearHistory() {
-  if (!confirm("Bạn muốn xóa toàn bộ lịch sử?")) return;
+
+  if (!confirm("Bạn muốn xóa toàn bộ lịch sử?")) {
+    return;
+  }
 
   localStorage.removeItem(HISTORY_KEY);
+
   historyBox.innerHTML = "";
 }
 
+// ==========================
+// SỰ KIỆN NÚT
+// ==========================
+
+startButton.addEventListener(
+  "click",
+  startAutoRead
+);
+
+checkButton.addEventListener(
+  "click",
+  readClipboard
+);
+
+clearButton.addEventListener(
+  "click",
+  clearHistory
+);
+
+// ==========================
 // KHỞI ĐỘNG
+// ==========================
+
 showHistory();
+
 </script>
 
 </body>
